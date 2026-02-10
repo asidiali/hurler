@@ -109,7 +109,7 @@ export function CodeEditor({
         }
       }),
       EditorView.theme({
-        "&": { minHeight, fontSize: "13px" },
+        "&": { minHeight, fontSize: "13px", maxWidth: "100%" },
         ".cm-scroller": { overflow: "auto" },
         ".cm-content": {
           fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
@@ -118,6 +118,7 @@ export function CodeEditor({
           fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
         },
       }),
+      EditorView.lineWrapping,
     ];
 
     // Add language support (use JavaScript for JSON syntax highlighting)
@@ -156,7 +157,7 @@ export function CodeEditor({
   return (
     <div
       ref={editorRef}
-      className={`border-input overflow-hidden rounded-md border shadow-xs ${className}`}
+      className={`border-input overflow-hidden rounded-md border shadow-xs w-full max-w-full ${className}`}
     />
   );
 }
