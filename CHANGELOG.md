@@ -1,0 +1,28 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] - 2026-02-10
+
+### Added
+- Visual body editor now uses CodeMirror with syntax highlighting, line numbers, and bracket matching (#1)
+- Support for `[Captures]` section in visual editor - captures no longer break asserts display (#2)
+- Startup check for hurl installation with helpful error message and installation link (#5)
+- Tab key support for indentation in body editor
+
+### Fixed
+- Page title changed from "hurler-temp" to "Hurler" (#6)
+
+## [0.1.0] - 2026-02-10
+
+### Added
+- Initial release
+- Web-based GUI for managing Hurl HTTP request collections
+- Visual editor for .hurl files
+- Environment management with .env files
+- Request execution with response display
+- Collections with sections and groups
+- Dark theme UI
