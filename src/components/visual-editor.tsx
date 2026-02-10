@@ -155,6 +155,42 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
           </div>
         </Section>
 
+        {/* Captures */}
+        <Section title="Captures">
+          {request.captures.map((capture, i) => (
+            <div key={i} className="flex gap-2">
+              <Input
+                className="flex-1 font-mono text-sm"
+                placeholder='token: jsonpath "$.token"'
+                value={capture}
+                onChange={(e) => {
+                  const captures = [...request.captures];
+                  captures[i] = e.target.value;
+                  update({ captures });
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  const captures = request.captures.filter((_, j) => j !== i);
+                  update({ captures });
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => update({ captures: [...request.captures, ""] })}
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add Capture
+          </Button>
+        </Section>
+
         {/* Asserts */}
         <Section title="Asserts">
           {request.asserts.map((assert, i) => (
