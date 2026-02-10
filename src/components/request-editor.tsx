@@ -132,11 +132,12 @@ export function RequestEditor({
           }
         }),
         EditorView.theme({
-          "&": { height: "100%", fontSize: "13px" },
+          "&": { height: "100%", fontSize: "13px", maxWidth: "100%" },
           ".cm-scroller": { overflow: "auto" },
           ".cm-content": { fontFamily: "'JetBrains Mono', 'Fira Code', monospace" },
           ".cm-gutters": { fontFamily: "'JetBrains Mono', 'Fira Code', monospace" },
         }),
+        EditorView.lineWrapping,
       ],
     });
 
