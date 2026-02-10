@@ -15,6 +15,49 @@ import {
   bracketMatching,
 } from "@codemirror/language";
 import { javascript } from "@codemirror/lang-javascript";
+import { useTheme } from "@/lib/theme-context";
+
+// Light theme for CodeMirror
+const lightTheme = EditorView.theme({
+  "&": {
+    backgroundColor: "#ffffff",
+    color: "#1f2937",
+  },
+  ".cm-content": {
+    caretColor: "#1f2937",
+  },
+  ".cm-cursor, .cm-dropCursor": {
+    borderLeftColor: "#1f2937",
+  },
+  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+    backgroundColor: "#d1d5db",
+  },
+  ".cm-panels": {
+    backgroundColor: "#f3f4f6",
+    color: "#1f2937",
+  },
+  ".cm-panels.cm-panels-top": {
+    borderBottom: "1px solid #e5e7eb",
+  },
+  ".cm-panels.cm-panels-bottom": {
+    borderTop: "1px solid #e5e7eb",
+  },
+  ".cm-activeLine": {
+    backgroundColor: "#f9fafb",
+  },
+  ".cm-gutters": {
+    backgroundColor: "#f9fafb",
+    color: "#9ca3af",
+    border: "none",
+    borderRight: "1px solid #e5e7eb",
+  },
+  ".cm-activeLineGutter": {
+    backgroundColor: "#f3f4f6",
+  },
+  ".cm-lineNumbers .cm-gutterElement": {
+    color: "#9ca3af",
+  },
+}, { dark: false });
 
 interface CodeEditorProps {
   value: string;
@@ -35,13 +78,20 @@ export function CodeEditor({
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const valueRef = useRef(value);
+  const theme = useTheme();
 
   onChangeRef.current = onChange;
   valueRef.current = value;
 
-  // Create editor on mount
+  // Create editor on mount or when theme changes
   useEffect(() => {
     if (!editorRef.current) return;
+
+    // Destroy existing editor
+    if (viewRef.current) {
+      viewRef.current.destroy();
+      viewRef.current = null;
+    }
 
     const extensions = [
       lineNumbers(),
@@ -50,7 +100,8 @@ export function CodeEditor({
       highlightActiveLine(),
       bracketMatching(),
       syntaxHighlighting(defaultHighlightStyle),
-      oneDark,
+      // Apply theme based on system preference
+      theme === "dark" ? oneDark : lightTheme,
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
@@ -88,7 +139,7 @@ export function CodeEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [language, minHeight]);
+  }, [language, minHeight, theme]);
 
   // Sync value changes from parent
   useEffect(() => {
