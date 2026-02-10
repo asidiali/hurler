@@ -4,6 +4,7 @@ export interface HurlRequest {
   headers: { key: string; value: string }[];
   body: string;
   responseStatus: string;
+  captures: string[];
   asserts: string[];
 }
 
@@ -14,6 +15,7 @@ export function parseHurl(content: string): HurlRequest {
     headers: [],
     body: "",
     responseStatus: "",
+    captures: [],
     asserts: [],
   };
 
@@ -84,15 +86,30 @@ export function parseHurl(content: string): HurlRequest {
     i++;
   }
 
-  // Asserts section
+  // Parse [Captures] and [Asserts] sections
+  let currentSection: "none" | "captures" | "asserts" = "none";
+
   while (i < lines.length) {
     const trimmed = lines[i].trim();
-    if (trimmed === "[Asserts]") {
+
+    if (trimmed === "[Captures]") {
+      currentSection = "captures";
       i++;
       continue;
     }
+    if (trimmed === "[Asserts]") {
+      currentSection = "asserts";
+      i++;
+      continue;
+    }
+
     if (trimmed !== "") {
-      result.asserts.push(trimmed);
+      if (currentSection === "captures") {
+        result.captures.push(trimmed);
+      } else if (currentSection === "asserts") {
+        result.asserts.push(trimmed);
+      }
+      // If no section header yet, ignore orphan lines (shouldn't happen in valid hurl)
     }
     i++;
   }
@@ -120,15 +137,28 @@ export function serializeHurl(request: HurlRequest): string {
   }
 
   // Response section
-  if (request.responseStatus || request.asserts.length > 0) {
+  const hasCaptures = request.captures.some((c) => c.trim());
+  const hasAsserts = request.asserts.some((a) => a.trim());
+
+  if (request.responseStatus || hasCaptures || hasAsserts) {
     lines.push("");
     lines.push(`HTTP ${request.responseStatus || "*"}`);
 
-    if (request.asserts.length > 0) {
-      const nonEmpty = request.asserts.filter((a) => a.trim());
-      if (nonEmpty.length > 0) {
-        lines.push("[Asserts]");
-        for (const assert of nonEmpty) {
+    // Captures section (comes before Asserts in Hurl)
+    if (hasCaptures) {
+      lines.push("[Captures]");
+      for (const capture of request.captures) {
+        if (capture.trim()) {
+          lines.push(capture);
+        }
+      }
+    }
+
+    // Asserts section
+    if (hasAsserts) {
+      lines.push("[Asserts]");
+      for (const assert of request.asserts) {
+        if (assert.trim()) {
           lines.push(assert);
         }
       }

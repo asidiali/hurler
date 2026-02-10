@@ -11,6 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2 } from "lucide-react";
 import { parseHurl, serializeHurl, type HurlRequest } from "@/lib/hurl-parser";
+import { CodeEditor } from "@/components/code-editor";
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 const BODY_METHODS = ["POST", "PUT", "PATCH"];
@@ -109,11 +110,11 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
         <Section title="Body">
           {request.body || BODY_METHODS.includes(request.method) ? (
             <div className="flex flex-col gap-2">
-              <textarea
-                className="border-input bg-transparent min-h-[120px] w-full rounded-md border px-3 py-2 font-mono text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                placeholder='{"key": "value"}'
+              <CodeEditor
                 value={request.body}
-                onChange={(e) => update({ body: e.target.value })}
+                onChange={(body) => update({ body })}
+                language="json"
+                minHeight="120px"
               />
               {request.body && (
                 <Button
@@ -152,6 +153,42 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
               onChange={(e) => update({ responseStatus: e.target.value })}
             />
           </div>
+        </Section>
+
+        {/* Captures */}
+        <Section title="Captures">
+          {request.captures.map((capture, i) => (
+            <div key={i} className="flex gap-2">
+              <Input
+                className="flex-1 font-mono text-sm"
+                placeholder='token: jsonpath "$.token"'
+                value={capture}
+                onChange={(e) => {
+                  const captures = [...request.captures];
+                  captures[i] = e.target.value;
+                  update({ captures });
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  const captures = request.captures.filter((_, j) => j !== i);
+                  update({ captures });
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => update({ captures: [...request.captures, ""] })}
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add Capture
+          </Button>
         </Section>
 
         {/* Asserts */}
