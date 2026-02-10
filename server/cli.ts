@@ -3,6 +3,23 @@ import { createApp } from "./index.js";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { mkdirSync } from "node:fs";
+import { execSync } from "node:child_process";
+
+// Check if hurl is installed
+function checkHurlInstalled(): void {
+  try {
+    execSync("hurl --version", { stdio: "ignore" });
+  } catch {
+    console.error("\x1b[31mError: hurl is not installed or not in PATH.\x1b[0m");
+    console.error("");
+    console.error("Hurler requires hurl to run HTTP requests.");
+    console.error("Install it from: https://hurl.dev/docs/installation.html");
+    console.error("");
+    process.exit(1);
+  }
+}
+
+checkHurlInstalled();
 
 const { values } = parseArgs({
   options: {
