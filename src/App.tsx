@@ -13,14 +13,26 @@ export default function App() {
   const [files, setFiles] = useState<string[]>([]);
   const [environments, setEnvironments] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
-  const [activeEnvironment, setActiveEnvironment] = useState<string | null>(null);
+  const [activeEnvironment, setActiveEnvironmentRaw] = useState<string | null>(
+    () => localStorage.getItem("hurler:activeEnvironment")
+  );
+  const setActiveEnvironment = useCallback((env: string | null) => {
+    setActiveEnvironmentRaw(env);
+    if (env) {
+      localStorage.setItem("hurler:activeEnvironment", env);
+    } else {
+      localStorage.removeItem("hurler:activeEnvironment");
+    }
+  }, []);
   const [editorContent, setEditorContent] = useState("");
   const [savedContent, setSavedContent] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [metadata, setMetadata] = useState<Metadata>({ sections: [], fileGroups: {} });
   const [showEnvEditor, setShowEnvEditor] = useState(false);
-  const [showEnvPicker, setShowEnvPicker] = useState(true);
+  const [showEnvPicker, setShowEnvPicker] = useState(
+    () => !localStorage.getItem("hurler:activeEnvironment")
+  );
 
   const loadFiles = useCallback(async () => {
     const result = await api.listFiles();
@@ -30,7 +42,12 @@ export default function App() {
   const loadEnvironments = useCallback(async () => {
     const result = await api.listEnvironments();
     setEnvironments(result);
-  }, []);
+    // Clear persisted environment if it no longer exists
+    const saved = localStorage.getItem("hurler:activeEnvironment");
+    if (saved && !result.includes(saved)) {
+      setActiveEnvironment(null);
+    }
+  }, [setActiveEnvironment]);
 
   const loadMetadata = useCallback(async () => {
     const result = await api.getMetadata();

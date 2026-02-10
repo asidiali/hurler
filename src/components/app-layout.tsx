@@ -53,21 +53,38 @@ function DragHandle({
   );
 }
 
+function loadNumber(key: string, fallback: number): number {
+  try {
+    const v = localStorage.getItem(key);
+    if (v !== null) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n)) return n;
+    }
+  } catch {}
+  return fallback;
+}
+
 export function AppLayout({ sidebar, editor, response }: AppLayoutProps) {
-  const [sidebarWidth, setSidebarWidth] = useState(260);
-  const [editorRatio, setEditorRatio] = useState(0.55);
+  const [sidebarWidth, setSidebarWidth] = useState(() => loadNumber("hurler:sidebarWidth", 260));
+  const [editorRatio, setEditorRatio] = useState(() => loadNumber("hurler:editorRatio", 0.55));
   const mainRef = useRef<HTMLDivElement>(null);
 
   const onSidebarDrag = useCallback((delta: number) => {
-    setSidebarWidth((w) => Math.max(180, Math.min(600, w + delta)));
+    setSidebarWidth((w) => {
+      const next = Math.max(180, Math.min(600, w + delta));
+      localStorage.setItem("hurler:sidebarWidth", String(next));
+      return next;
+    });
   }, []);
 
   const onEditorDrag = useCallback((delta: number) => {
     if (!mainRef.current) return;
     const totalHeight = mainRef.current.clientHeight;
-    setEditorRatio((r) =>
-      Math.max(0.15, Math.min(0.85, r + delta / totalHeight))
-    );
+    setEditorRatio((r) => {
+      const next = Math.max(0.15, Math.min(0.85, r + delta / totalHeight));
+      localStorage.setItem("hurler:editorRatio", String(next));
+      return next;
+    });
   }, []);
 
   return (

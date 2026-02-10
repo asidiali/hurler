@@ -1,7 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play, Save, Loader2 } from "lucide-react";
+import { VisualEditor } from "@/components/visual-editor";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers, drawSelection, highlightActiveLine } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
@@ -29,6 +31,7 @@ export function RequestEditor({
   isDirty,
   environment,
 }: RequestEditorProps) {
+  const [tab, setTab] = useState<"raw" | "visual">("visual");
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -120,7 +123,15 @@ export function RequestEditor({
       {fileName ? (
         <>
           <div className="flex items-center gap-2 border-b px-3 py-2">
-            <span className="text-sm font-medium truncate flex-1">{fileName}.hurl</span>
+            <span className="text-sm font-medium truncate">{fileName}.hurl</span>
+            <div className="flex-1" />
+            <Tabs value={tab} onValueChange={(v) => setTab(v as "raw" | "visual")}>
+              <TabsList className="h-7">
+                <TabsTrigger value="visual" className="text-xs px-2 py-0.5">Visual</TabsTrigger>
+                <TabsTrigger value="raw" className="text-xs px-2 py-0.5">Raw</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex-1" />
             {isDirty && (
               <Badge variant="outline" className="text-xs">
                 modified
@@ -145,7 +156,12 @@ export function RequestEditor({
             </Button>
           </div>
           <div className="relative flex-1">
-            <div ref={editorRef} className="absolute inset-0" />
+            <div ref={editorRef} className={`absolute inset-0 ${tab !== "raw" ? "invisible" : ""}`} />
+            {tab === "visual" && (
+              <div className="absolute inset-0">
+                <VisualEditor content={content} onChange={onChange} />
+              </div>
+            )}
           </div>
         </>
       ) : (
