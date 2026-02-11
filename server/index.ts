@@ -105,7 +105,7 @@ export function createApp(dataDir: string) {
 
   app.patch("/api/files/:name", async (req: Request, res: Response) => {
     await ensureDirs();
-    const oldName = req.params.name;
+    const oldName = req.params.name as string;
     const { newName } = req.body as { newName: string };
     if (!newName || typeof newName !== "string") {
       res.status(400).json({ error: "newName is required" });
