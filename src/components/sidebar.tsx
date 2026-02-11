@@ -46,6 +46,7 @@ interface SidebarProps {
   onSelectFile: (name: string) => void;
   onCreateFile: (name: string) => void;
   onDeleteFile: (name: string) => void;
+  onRenameFile: (oldName: string, newName: string) => void;
   metadata: Metadata;
   onUpdateMetadata: (metadata: Metadata) => void;
   environments: string[];
@@ -64,6 +65,7 @@ export function Sidebar({
   onSelectFile,
   onCreateFile,
   onDeleteFile,
+  onRenameFile,
   metadata,
   onUpdateMetadata,
   environments,
@@ -73,6 +75,9 @@ export function Sidebar({
 }: SidebarProps) {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newFileName, setNewFileName] = useState("");
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renamingFile, setRenamingFile] = useState<string | null>(null);
+  const [renameNewName, setRenameNewName] = useState("");
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingSectionName, setEditingSectionName] = useState("");
@@ -205,6 +210,17 @@ export function Sidebar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              setRenamingFile(file);
+              setRenameNewName(file);
+              setShowRenameDialog(true);
+            }}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Rename
+          </DropdownMenuItem>
           {metadata.sections.length > 0 && (
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Move to</DropdownMenuSubTrigger>
@@ -451,6 +467,44 @@ export function Sidebar({
             </Button>
             <Button onClick={handleCreate} disabled={!newFileName.trim()}>
               Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Request</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="New name"
+            value={renameNewName}
+            onChange={(e) => setRenameNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && renameNewName.trim() && renamingFile) {
+                onRenameFile(renamingFile, renameNewName.trim());
+                setShowRenameDialog(false);
+                setRenamingFile(null);
+              }
+            }}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (renamingFile && renameNewName.trim()) {
+                  onRenameFile(renamingFile, renameNewName.trim());
+                  setShowRenameDialog(false);
+                  setRenamingFile(null);
+                }
+              }}
+              disabled={!renameNewName.trim()}
+            >
+              Rename
             </Button>
           </DialogFooter>
         </DialogContent>

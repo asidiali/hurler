@@ -103,6 +103,51 @@ export function createApp(dataDir: string) {
     }
   });
 
+  app.patch("/api/files/:name", async (req: Request, res: Response) => {
+    await ensureDirs();
+    const oldName = req.params.name;
+    const { newName } = req.body as { newName: string };
+    if (!newName || typeof newName !== "string") {
+      res.status(400).json({ error: "newName is required" });
+      return;
+    }
+    const safeNewName = newName.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const oldPath = path.join(COLLECTIONS_DIR, `${oldName}.hurl`);
+    const newPath = path.join(COLLECTIONS_DIR, `${safeNewName}.hurl`);
+
+    // Check old file exists
+    try {
+      await fs.access(oldPath);
+    } catch {
+      res.status(404).json({ error: "File not found" });
+      return;
+    }
+
+    // Check new name doesn't already exist (unless same name)
+    if (oldName !== safeNewName) {
+      try {
+        await fs.access(newPath);
+        res.status(409).json({ error: "A file with that name already exists" });
+        return;
+      } catch {
+        // Good, doesn't exist
+      }
+    }
+
+    // Rename the file
+    await fs.rename(oldPath, newPath);
+
+    // Update metadata if file was in a section
+    const metadata = await readMetadata();
+    if (metadata.fileGroups[oldName]) {
+      metadata.fileGroups[safeNewName] = metadata.fileGroups[oldName];
+      delete metadata.fileGroups[oldName];
+      await writeMetadata(metadata);
+    }
+
+    res.json({ oldName, newName: safeNewName });
+  });
+
   // --- Metadata endpoints ---
 
   app.get("/api/metadata", async (_req: Request, res: Response) => {
