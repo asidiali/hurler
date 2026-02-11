@@ -33,6 +33,12 @@ export const updateFile = (name: string, content: string) =>
 export const deleteFile = (name: string) =>
   fetchJSON<{ ok: boolean }>(`${BASE}/files/${name}`, { method: "DELETE" });
 
+export const renameFile = (name: string, newName: string) =>
+  fetchJSON<{ oldName: string; newName: string }>(`${BASE}/files/${name}`, {
+    method: "PATCH",
+    body: JSON.stringify({ newName }),
+  });
+
 // Environments
 export const listEnvironments = () =>
   fetchJSON<string[]>(`${BASE}/environments`);

@@ -104,6 +104,19 @@ export default function App() {
     [activeFile, loadFiles, metadata]
   );
 
+  const handleRenameFile = useCallback(
+    async (oldName: string, newName: string) => {
+      const result = await api.renameFile(oldName, newName);
+      // If the renamed file was active, update activeFile to new name
+      if (activeFile === oldName) {
+        setActiveFile(result.newName);
+      }
+      await loadFiles();
+      await loadMetadata();
+    },
+    [activeFile, loadFiles, loadMetadata]
+  );
+
   const handleSave = useCallback(async () => {
     if (!activeFile) return;
     await api.updateFile(activeFile, editorContent);
@@ -150,6 +163,7 @@ export default function App() {
             onSelectFile={handleSelectFile}
             onCreateFile={handleCreateFile}
             onDeleteFile={handleDeleteFile}
+            onRenameFile={handleRenameFile}
             metadata={metadata}
             onUpdateMetadata={handleUpdateMetadata}
             environments={environments}
