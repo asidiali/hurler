@@ -15,6 +15,11 @@ interface AssertResult {
   message?: string;
 }
 
+interface CaptureResult {
+  name: string;
+  value: unknown;
+}
+
 function getStatusColor(status: number) {
   if (status >= 200 && status < 300) return "bg-green-500/15 text-green-700 border-green-500/30";
   if (status >= 300 && status < 400) return "bg-yellow-500/15 text-yellow-700 border-yellow-500/30";
@@ -43,6 +48,7 @@ function extractResponseInfo(result: RunResult) {
   const json = result.json as {
     entries?: Array<{
       asserts?: AssertResult[];
+      captures?: CaptureResult[];
       calls?: Array<{
         response?: {
           status?: number;
@@ -55,7 +61,7 @@ function extractResponseInfo(result: RunResult) {
   const body = extractBodyFromVerbose(result.stderr);
 
   if (!json?.entries?.length) {
-    return { status: 0, headers: [] as Array<{ name: string; value: string }>, body: body || result.stderr, asserts: [] as AssertResult[] };
+    return { status: 0, headers: [] as Array<{ name: string; value: string }>, body: body || result.stderr, asserts: [] as AssertResult[], captures: [] as CaptureResult[] };
   }
 
   const lastEntry = json.entries[json.entries.length - 1];
@@ -63,12 +69,14 @@ function extractResponseInfo(result: RunResult) {
   const lastCall = calls[calls.length - 1];
   const response = lastCall?.response;
   const asserts = lastEntry.asserts ?? [];
+  const captures = lastEntry.captures ?? [];
 
   return {
     status: response?.status ?? 0,
     headers: response?.headers ?? [],
     body,
     asserts,
+    captures,
   };
 }
 
@@ -108,7 +116,7 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
     );
   }
 
-  const { status, headers, body, asserts } = extractResponseInfo(result);
+  const { status, headers, body, asserts, captures } = extractResponseInfo(result);
   const sourceLines = hurlSource.split("\n");
 
   // Filter to only explicit asserts (skip the implicit status/HTTP version ones on the HTTP line)
@@ -169,6 +177,14 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
               )}
             </TabsTrigger>
           )}
+          {captures.length > 0 && (
+            <TabsTrigger value="captures">
+              Captures
+              <Badge variant="outline" className="ml-1.5 bg-blue-500/15 text-blue-700 border-blue-500/30 text-[10px] px-1.5 py-0">
+                {captures.length}
+              </Badge>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="verbose">Verbose</TabsTrigger>
         </TabsList>
 
@@ -227,6 +243,34 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
                             <div>expected: <span className="text-green-700">{detail.expected}</span></div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
+        )}
+
+        {captures.length > 0 && (
+          <TabsContent value="captures" className="relative flex-1 m-0">
+            <div className="absolute inset-0 overflow-auto">
+              <div className="p-3 space-y-1">
+                {captures.map((c, i) => {
+                  const displayValue = typeof c.value === "string" 
+                    ? c.value 
+                    : JSON.stringify(c.value);
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono bg-blue-500/5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-semibold text-blue-700">{c.name}</span>
+                          <span className="text-muted-foreground">=</span>
+                          <span className="break-all text-foreground">{displayValue}</span>
+                        </div>
                       </div>
                     </div>
                   );
