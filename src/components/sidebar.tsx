@@ -369,8 +369,8 @@ export function Sidebar({
             );
           })}
 
-          {/* Ungrouped section */}
-          {(ungroupedFiles.length > 0 || metadata.sections.length > 0) && (
+          {/* Ungrouped section - only show if there are ungrouped files */}
+          {ungroupedFiles.length > 0 && (
             <div>
               {metadata.sections.length > 0 &&
                 renderSectionHeader("__ungrouped__", "Ungrouped", true)}
