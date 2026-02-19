@@ -45,25 +45,27 @@ export const listEnvironments = () =>
 
 export const createEnvironment = (
   name: string,
-  variables?: Record<string, string>
+  variables?: Record<string, string>,
+  secrets?: Record<string, string>
 ) =>
   fetchJSON<{ name: string }>(`${BASE}/environments`, {
     method: "POST",
-    body: JSON.stringify({ name, variables }),
+    body: JSON.stringify({ name, variables, secrets }),
   });
 
 export const readEnvironment = (name: string) =>
-  fetchJSON<{ name: string; variables: Record<string, string> }>(
+  fetchJSON<{ name: string; variables: Record<string, string>; secrets: Record<string, string> }>(
     `${BASE}/environments/${name}`
   );
 
 export const updateEnvironment = (
   name: string,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  secrets: Record<string, string>
 ) =>
   fetchJSON<{ name: string }>(`${BASE}/environments/${name}`, {
     method: "PUT",
-    body: JSON.stringify({ variables }),
+    body: JSON.stringify({ variables, secrets }),
   });
 
 export const deleteEnvironment = (name: string) =>
