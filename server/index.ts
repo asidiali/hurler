@@ -172,70 +172,156 @@ export function createApp(dataDir: string) {
 
   app.post("/api/environments", async (req: Request, res: Response) => {
     await ensureDirs();
-    const { name, variables } = req.body as {
+    const { name, variables, secrets } = req.body as {
       name: string;
       variables?: Record<string, string>;
+      secrets?: Record<string, string>;
     };
     if (!name || typeof name !== "string") {
       res.status(400).json({ error: "name is required" });
       return;
     }
     const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const filePath = path.join(ENVIRONMENTS_DIR, `${safeName}.env`);
+    const envPath = path.join(ENVIRONMENTS_DIR, `${safeName}.env`);
+    const secretsPath = path.join(ENVIRONMENTS_DIR, `${safeName}.secrets.env`);
+    
+    // Check if environment already exists
     try {
-      await fs.access(filePath);
+      await fs.access(envPath);
       res.status(409).json({ error: "Environment already exists" });
       return;
     } catch {
       // Doesn't exist, good
     }
-    const content = variables
-      ? Object.entries(variables)
-          .map(([k, v]) => `${k}=${v}`)
-          .join("\n")
-      : "";
-    await fs.writeFile(filePath, content, "utf-8");
+    
+    // Create shared variables file
+    const varsContent = variables ? serializeEnvFile(variables) : "";
+    await fs.writeFile(envPath, varsContent, "utf-8");
+    
+    // Create secrets file if provided
+    if (secrets && Object.keys(secrets).length > 0) {
+      const secretsContent = serializeEnvFile(secrets);
+      await fs.writeFile(secretsPath, secretsContent, "utf-8");
+    }
+    
     res.status(201).json({ name: safeName });
   });
 
+  // Helper to parse env file content into key-value pairs
+  function parseEnvFile(content: string): Record<string, string> {
+    const variables: Record<string, string> = {};
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx > 0) {
+        variables[trimmed.slice(0, eqIdx)] = trimmed.slice(eqIdx + 1);
+      }
+    }
+    return variables;
+  }
+
+  // Helper to serialize variables to env file format
+  function serializeEnvFile(variables: Record<string, string>): string {
+    return Object.entries(variables)
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n");
+  }
+
   app.get("/api/environments/:name", async (req: Request, res: Response) => {
     await ensureDirs();
-    const filePath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.env`);
+    const envPath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.env`);
+    const secretsPath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.secrets.env`);
+    
+    let variables: Record<string, string> = {};
+    let secrets: Record<string, string> = {};
+    let envExists = false;
+    
+    // Read shared variables
     try {
-      const content = await fs.readFile(filePath, "utf-8");
-      const variables: Record<string, string> = {};
-      for (const line of content.split("\n")) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith("#")) continue;
-        const eqIdx = trimmed.indexOf("=");
-        if (eqIdx > 0) {
-          variables[trimmed.slice(0, eqIdx)] = trimmed.slice(eqIdx + 1);
-        }
-      }
-      res.json({ name: req.params.name, variables });
+      const content = await fs.readFile(envPath, "utf-8");
+      variables = parseEnvFile(content);
+      envExists = true;
     } catch {
-      res.status(404).json({ error: "Environment not found" });
+      // File doesn't exist
     }
+    
+    // Read secrets
+    try {
+      const content = await fs.readFile(secretsPath, "utf-8");
+      secrets = parseEnvFile(content);
+      envExists = true;
+    } catch {
+      // File doesn't exist
+    }
+    
+    if (!envExists) {
+      res.status(404).json({ error: "Environment not found" });
+      return;
+    }
+    
+    res.json({ name: req.params.name, variables, secrets });
   });
 
   app.put("/api/environments/:name", async (req: Request, res: Response) => {
     await ensureDirs();
-    const filePath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.env`);
-    const { variables } = req.body as { variables: Record<string, string> };
-    const content = Object.entries(variables)
-      .map(([k, v]) => `${k}=${v}`)
-      .join("\n");
-    await fs.writeFile(filePath, content, "utf-8");
+    const envPath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.env`);
+    const secretsPath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.secrets.env`);
+    const { variables, secrets } = req.body as { 
+      variables?: Record<string, string>;
+      secrets?: Record<string, string>;
+    };
+    
+    // Write shared variables
+    if (variables !== undefined) {
+      const content = serializeEnvFile(variables);
+      await fs.writeFile(envPath, content, "utf-8");
+    }
+    
+    // Write secrets
+    if (secrets !== undefined) {
+      if (Object.keys(secrets).length > 0) {
+        const content = serializeEnvFile(secrets);
+        await fs.writeFile(secretsPath, content, "utf-8");
+      } else {
+        // Remove secrets file if empty
+        try {
+          await fs.unlink(secretsPath);
+        } catch {
+          // File doesn't exist, that's fine
+        }
+      }
+    }
+    
     res.json({ name: req.params.name });
   });
 
   app.delete("/api/environments/:name", async (req: Request, res: Response) => {
     await ensureDirs();
-    const filePath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.env`);
+    const envPath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.env`);
+    const secretsPath = path.join(ENVIRONMENTS_DIR, `${req.params.name}.secrets.env`);
+    
+    let deleted = false;
+    
+    // Delete shared variables file
     try {
-      await fs.unlink(filePath);
-      res.json({ ok: true });
+      await fs.unlink(envPath);
+      deleted = true;
     } catch {
+      // File doesn't exist
+    }
+    
+    // Delete secrets file
+    try {
+      await fs.unlink(secretsPath);
+      deleted = true;
+    } catch {
+      // File doesn't exist
+    }
+    
+    if (deleted) {
+      res.json({ ok: true });
+    } else {
       res.status(404).json({ error: "Environment not found" });
     }
   });
@@ -265,10 +351,29 @@ export function createApp(dataDir: string) {
 
     if (environment) {
       const envPath = path.join(ENVIRONMENTS_DIR, `${environment}.env`);
+      const secretsPath = path.join(ENVIRONMENTS_DIR, `${environment}.secrets.env`);
+      
+      let envExists = false;
+      
+      // Add shared variables file if it exists
       try {
         await fs.access(envPath);
         args.push("--variables-file", envPath);
+        envExists = true;
       } catch {
+        // File doesn't exist
+      }
+      
+      // Add secrets file if it exists
+      try {
+        await fs.access(secretsPath);
+        args.push("--variables-file", secretsPath);
+        envExists = true;
+      } catch {
+        // File doesn't exist
+      }
+      
+      if (!envExists) {
         res.status(404).json({ error: "Environment file not found" });
         return;
       }
