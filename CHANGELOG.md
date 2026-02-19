@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-19
+
+### Added
+- Separate environment variables and secrets (#18, #19)
+  - Variables stored in `{name}.env` (safe to commit)
+  - Secrets stored in `{name}.secrets.env` (gitignored)
+- Environment editor UI now has distinct sections for Variables and Secrets
+- Secrets are masked by default with toggle to show/hide values
+- Info tooltips explaining what each section is for
+
 ## [0.5.0] - 2026-02-10
 
 ### Added
