@@ -16,7 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, Save, Eye, EyeOff, Lock } from "lucide-react";
+import { Plus, Trash2, Save, Eye, EyeOff, Lock, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import * as api from "@/lib/api";
 
 interface EnvEditorProps {
@@ -200,9 +206,18 @@ export function EnvEditor({
               <div className="space-y-4 pr-4">
                 {/* Variables Section */}
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <div className="text-sm font-medium text-foreground flex items-center gap-1.5">
                     Variables
-                    <span className="text-xs text-muted-foreground font-normal">(safe to commit)</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Environment variables are stored in plain text and safe to commit to version control. Use for non-sensitive configuration like API URLs or feature flags.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="grid grid-cols-[1fr_1fr_40px] gap-2 text-xs font-medium text-muted-foreground px-1">
                     <span>Key</span>
@@ -248,10 +263,19 @@ export function EnvEditor({
 
                 {/* Secrets Section */}
                 <div className="space-y-2 pt-2 border-t">
-                  <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <div className="text-sm font-medium text-foreground flex items-center gap-1.5">
                     <Lock className="h-3.5 w-3.5 text-amber-500" />
                     Secrets
-                    <span className="text-xs text-muted-foreground font-normal">(gitignored)</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Secrets are stored separately and gitignored by default. Use for API keys, tokens, passwords, and other sensitive values.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="grid grid-cols-[1fr_1fr_72px] gap-2 text-xs font-medium text-muted-foreground px-1">
                     <span>Key</span>
