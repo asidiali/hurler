@@ -20,6 +20,10 @@ export function parseHurl(content: string): HurlRequest {
   };
 
   const lines = content.split("\n");
+  // Remove trailing empty line (from files ending with newline)
+  if (lines.length > 0 && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
   if (lines.length === 0) return result;
 
   // Line 1: METHOD URL
@@ -49,7 +53,7 @@ export function parseHurl(content: string): HurlRequest {
     if (trimmed.startsWith("HTTP")) break;
 
     const colonIdx = trimmed.indexOf(":");
-    if (colonIdx > 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    if (colonIdx >= 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
       result.headers.push({
         key: trimmed.substring(0, colonIdx).trim(),
         value: trimmed.substring(colonIdx + 1).trim(),
@@ -103,12 +107,13 @@ export function parseHurl(content: string): HurlRequest {
       continue;
     }
 
-    if (trimmed !== "") {
-      if (currentSection === "captures") {
-        result.captures.push(trimmed);
-      } else if (currentSection === "asserts") {
-        result.asserts.push(trimmed);
-      }
+    // Keep empty lines in captures/asserts for visual editor
+    if (currentSection === "captures") {
+      result.captures.push(trimmed);
+    } else if (currentSection === "asserts") {
+      result.asserts.push(trimmed);
+    } else if (trimmed !== "") {
+      // Orphan non-empty line outside sections - ignore
       // If no section header yet, ignore orphan lines (shouldn't happen in valid hurl)
     }
     i++;
@@ -123,11 +128,9 @@ export function serializeHurl(request: HurlRequest): string {
   // Method + URL
   lines.push(`${request.method} ${request.url}`);
 
-  // Headers
+  // Headers (keep empty ones for visual editor to work)
   for (const header of request.headers) {
-    if (header.key.trim() || header.value.trim()) {
-      lines.push(`${header.key}: ${header.value}`);
-    }
+    lines.push(`${header.key}: ${header.value}`);
   }
 
   // Body
@@ -137,30 +140,26 @@ export function serializeHurl(request: HurlRequest): string {
   }
 
   // Response section
-  const hasCaptures = request.captures.some((c) => c.trim());
-  const hasAsserts = request.asserts.some((a) => a.trim());
+  const hasCaptures = request.captures.length > 0;
+  const hasAsserts = request.asserts.length > 0;
 
   if (request.responseStatus || hasCaptures || hasAsserts) {
     lines.push("");
     lines.push(`HTTP ${request.responseStatus || "*"}`);
 
     // Captures section (comes before Asserts in Hurl)
-    if (hasCaptures) {
+    if (request.captures.length > 0) {
       lines.push("[Captures]");
       for (const capture of request.captures) {
-        if (capture.trim()) {
-          lines.push(capture);
-        }
+        lines.push(capture);
       }
     }
 
     // Asserts section
-    if (hasAsserts) {
+    if (request.asserts.length > 0) {
       lines.push("[Asserts]");
       for (const assert of request.asserts) {
-        if (assert.trim()) {
-          lines.push(assert);
-        }
+        lines.push(assert);
       }
     }
   }
