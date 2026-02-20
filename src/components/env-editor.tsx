@@ -163,7 +163,7 @@ export function EnvEditor({
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Manage Environments</DialogTitle>
           </DialogHeader>
