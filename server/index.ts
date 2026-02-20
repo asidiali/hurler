@@ -46,11 +46,34 @@ export function createApp(dataDir: string) {
 
   // --- File endpoints ---
 
+  // Helper to extract HTTP method from hurl file content
+  function extractHttpMethod(content: string): string | null {
+    const firstLine = content.split("\n")[0]?.trim();
+    if (!firstLine) return null;
+    const match = firstLine.match(/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)\s/i);
+    return match ? match[1].toUpperCase() : null;
+  }
+
   app.get("/api/files", async (_req: Request, res: Response) => {
     await ensureDirs();
     const files = await fs.readdir(COLLECTIONS_DIR);
     const hurlFiles = files.filter((f) => f.endsWith(".hurl"));
-    res.json(hurlFiles.map((f) => f.replace(/\.hurl$/, "")));
+    
+    const fileInfos = await Promise.all(
+      hurlFiles.map(async (f) => {
+        const name = f.replace(/\.hurl$/, "");
+        const filePath = path.join(COLLECTIONS_DIR, f);
+        try {
+          const content = await fs.readFile(filePath, "utf-8");
+          const method = extractHttpMethod(content);
+          return { name, method };
+        } catch {
+          return { name, method: null };
+        }
+      })
+    );
+    
+    res.json(fileInfos);
   });
 
   app.post("/api/files", async (req: Request, res: Response) => {

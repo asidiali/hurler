@@ -7,10 +7,10 @@ import { ResponsePanel } from "@/components/response-panel";
 import { EnvEditor } from "@/components/env-editor";
 import { EnvPickerModal } from "@/components/env-picker-modal";
 import * as api from "@/lib/api";
-import type { RunResult, Metadata } from "@/lib/api";
+import type { RunResult, Metadata, FileInfo } from "@/lib/api";
 
 export default function App() {
-  const [files, setFiles] = useState<string[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const [environments, setEnvironments] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [activeEnvironment, setActiveEnvironmentRaw] = useState<string | null>(
