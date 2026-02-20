@@ -20,6 +20,10 @@ export function parseHurl(content: string): HurlRequest {
   };
 
   const lines = content.split("\n");
+  // Remove trailing empty line (from files ending with newline)
+  if (lines.length > 0 && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
   if (lines.length === 0) return result;
 
   // Line 1: METHOD URL
