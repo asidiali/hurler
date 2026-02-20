@@ -166,7 +166,8 @@ export function createApp(dataDir: string) {
   app.get("/api/environments", async (_req: Request, res: Response) => {
     await ensureDirs();
     const files = await fs.readdir(ENVIRONMENTS_DIR);
-    const envFiles = files.filter((f) => f.endsWith(".env"));
+    // Filter for .env files but exclude .secrets.env files (they're paired with main env)
+    const envFiles = files.filter((f) => f.endsWith(".env") && !f.endsWith(".secrets.env"));
     res.json(envFiles.map((f) => f.replace(/\.env$/, "")));
   });
 
