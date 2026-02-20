@@ -2,7 +2,10 @@
   "name": "hurler",
   "version": "0.6.4",
   "type": "module",
-  "repository": "github:asidiali/hurler",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asidiali/hurler.git"
+  },
   "keywords": [
     "hurl",
     "curl",
@@ -12,7 +15,7 @@
   ],
   "license": "MIT",
   "bin": {
-    "hurler": "./dist/server/cli.js"
+    "hurler": "dist/server/cli.js"
   },
   "files": [
     "dist/"
