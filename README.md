@@ -47,11 +47,50 @@ All data is stored in `.hurl/` relative to where you run the command:
 ```
 .hurl/
 ├── collections/    # .hurl request files
-├── environments/   # .env variable files
+├── environments/   # environment variable files
 └── metadata.json   # UI organization (sections, groups)
 ```
 
 This directory is safe to commit to version control if you want to share collections with your team.
+
+## Environments
+
+Hurler supports two types of environment files:
+
+| File | Purpose | Commit to Git? |
+|------|---------|----------------|
+| `{name}.env` | Non-sensitive variables (URLs, feature flags, etc.) | ✅ Yes |
+| `{name}.secrets.env` | Sensitive values (API keys, tokens, passwords) | ❌ No |
+
+Both files are automatically merged when running requests. Variables from either file can be used in your `.hurl` files with `{{variable}}` syntax.
+
+### Gitignore Setup
+
+Add this to your `.gitignore` to keep secrets out of version control:
+
+```
+# Hurler secrets
+.hurl/environments/*.secrets.env
+```
+
+### Example
+
+```
+# .hurl/environments/dev.env (safe to commit)
+base_url=https://api.dev.example.com
+timeout=30
+
+# .hurl/environments/dev.secrets.env (gitignored)
+api_key=sk-abc123...
+auth_token=bearer-xyz...
+```
+
+Then use in your `.hurl` files:
+
+```hurl
+GET {{base_url}}/users
+Authorization: Bearer {{auth_token}}
+```
 
 ## License
 
