@@ -123,11 +123,9 @@ export function serializeHurl(request: HurlRequest): string {
   // Method + URL
   lines.push(`${request.method} ${request.url}`);
 
-  // Headers
+  // Headers (keep empty ones for visual editor to work)
   for (const header of request.headers) {
-    if (header.key.trim() || header.value.trim()) {
-      lines.push(`${header.key}: ${header.value}`);
-    }
+    lines.push(`${header.key}: ${header.value}`);
   }
 
   // Body
@@ -137,30 +135,26 @@ export function serializeHurl(request: HurlRequest): string {
   }
 
   // Response section
-  const hasCaptures = request.captures.some((c) => c.trim());
-  const hasAsserts = request.asserts.some((a) => a.trim());
+  const hasCaptures = request.captures.length > 0;
+  const hasAsserts = request.asserts.length > 0;
 
   if (request.responseStatus || hasCaptures || hasAsserts) {
     lines.push("");
     lines.push(`HTTP ${request.responseStatus || "*"}`);
 
     // Captures section (comes before Asserts in Hurl)
-    if (hasCaptures) {
+    if (request.captures.length > 0) {
       lines.push("[Captures]");
       for (const capture of request.captures) {
-        if (capture.trim()) {
-          lines.push(capture);
-        }
+        lines.push(capture);
       }
     }
 
     // Asserts section
-    if (hasAsserts) {
+    if (request.asserts.length > 0) {
       lines.push("[Asserts]");
       for (const assert of request.asserts) {
-        if (assert.trim()) {
-          lines.push(assert);
-        }
+        lines.push(assert);
       }
     }
   }
