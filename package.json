@@ -2,6 +2,15 @@
   "name": "hurler",
   "version": "0.6.3",
   "type": "module",
+  "repository": "https://github.com/asidiali/hurler",
+  "keywords": [
+    "hurl",
+    "curl",
+    "api request",
+    "postman",
+    "http"
+  ],
+  "license": "MIT",
   "bin": {
     "hurler": "./dist/server/cli.js"
   },
