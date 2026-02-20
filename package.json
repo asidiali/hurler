@@ -2,7 +2,7 @@
   "name": "hurler",
   "version": "0.6.3",
   "type": "module",
-  "repository": "https://github.com/asidiali/hurler",
+  "repository": "github:asidiali/hurler",
   "keywords": [
     "hurl",
     "curl",
