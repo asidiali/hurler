@@ -49,7 +49,7 @@ export function parseHurl(content: string): HurlRequest {
     if (trimmed.startsWith("HTTP")) break;
 
     const colonIdx = trimmed.indexOf(":");
-    if (colonIdx > 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    if (colonIdx >= 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
       result.headers.push({
         key: trimmed.substring(0, colonIdx).trim(),
         value: trimmed.substring(colonIdx + 1).trim(),
@@ -103,12 +103,13 @@ export function parseHurl(content: string): HurlRequest {
       continue;
     }
 
-    if (trimmed !== "") {
-      if (currentSection === "captures") {
-        result.captures.push(trimmed);
-      } else if (currentSection === "asserts") {
-        result.asserts.push(trimmed);
-      }
+    // Keep empty lines in captures/asserts for visual editor
+    if (currentSection === "captures") {
+      result.captures.push(trimmed);
+    } else if (currentSection === "asserts") {
+      result.asserts.push(trimmed);
+    } else if (trimmed !== "") {
+      // Orphan non-empty line outside sections - ignore
       // If no section header yet, ignore orphan lines (shouldn't happen in valid hurl)
     }
     i++;
