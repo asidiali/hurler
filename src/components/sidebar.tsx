@@ -37,9 +37,27 @@ import {
   ChevronDown,
   FolderPlus,
   Pencil,
+  GripVertical,
 } from "lucide-react";
-import type { Metadata, FileInfo } from "@/lib/api";
+import type { Metadata, Section, FileInfo } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface SidebarProps {
   files: FileInfo[];
@@ -70,6 +88,129 @@ function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+interface SortableSectionProps {
+  section: Section;
+  isCollapsed: boolean;
+  isEditing: boolean;
+  editingSectionName: string;
+  editInputRef: React.RefObject<HTMLInputElement | null>;
+  onToggle: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+  onEditNameChange: (name: string) => void;
+  onCommitRename: () => void;
+  onCancelEdit: () => void;
+  children: React.ReactNode;
+}
+
+function SortableSection({
+  section,
+  isCollapsed,
+  isEditing,
+  editingSectionName,
+  editInputRef,
+  onToggle,
+  onRename,
+  onDelete,
+  onEditNameChange,
+  onCommitRename,
+  onCancelEdit,
+  children,
+}: SortableSectionProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div className="group flex items-center gap-1 px-1 py-1 text-xs font-medium text-muted-foreground">
+        <button
+          className="flex items-center gap-1 flex-1 min-w-0 hover:text-foreground"
+          onClick={onToggle}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+          )}
+          {isEditing ? (
+            <Input
+              ref={editInputRef}
+              className="h-5 text-xs px-1 py-0"
+              value={editingSectionName}
+              onChange={(e) => onEditNameChange(e.target.value)}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === "Enter") onCommitRename();
+                if (e.key === "Escape") onCancelEdit();
+              }}
+              onBlur={onCommitRename}
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span
+              className="truncate"
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onRename();
+              }}
+            >
+              {section.name}
+            </span>
+          )}
+        </button>
+        {!isEditing && (
+          <>
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
+            >
+              <GripVertical className="h-3 w-3" />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onRename}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={onDelete}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete section
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
+      </div>
+      {!isCollapsed && children}
+    </div>
+  );
+}
+
 export function Sidebar({
   files,
   activeFile,
@@ -93,6 +234,17 @@ export function Sidebar({
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingSectionName, setEditingSectionName] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (editingSectionId && editInputRef.current) {
@@ -179,6 +331,18 @@ export function Sidebar({
       delete fileGroups[fileName];
     }
     onUpdateMetadata({ ...metadata, fileGroups });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = metadata.sections.findIndex((s) => s.id === active.id);
+      const newIndex = metadata.sections.findIndex((s) => s.id === over.id);
+
+      const newSections = arrayMove(metadata.sections, oldIndex, newIndex);
+      onUpdateMetadata({ ...metadata, sections: newSections });
+    }
   };
 
   // Group files by section
@@ -284,79 +448,22 @@ export function Sidebar({
     </div>
   );
 
-  const renderSectionHeader = (
-    sectionId: string,
-    name: string,
-    isUngrouped = false
-  ) => {
-    const isCollapsed = collapsedSections.has(sectionId);
-    const isEditing = editingSectionId === sectionId;
+  const renderUngroupedHeader = () => {
+    const isCollapsed = collapsedSections.has("__ungrouped__");
 
     return (
       <div className="group flex items-center gap-1 px-1 py-1 text-xs font-medium text-muted-foreground">
         <button
           className="flex items-center gap-1 flex-1 min-w-0 hover:text-foreground"
-          onClick={() => toggleSection(sectionId)}
+          onClick={() => toggleSection("__ungrouped__")}
         >
           {isCollapsed ? (
             <ChevronRight className="h-3.5 w-3.5 shrink-0" />
           ) : (
             <ChevronDown className="h-3.5 w-3.5 shrink-0" />
           )}
-          {isEditing ? (
-            <Input
-              ref={editInputRef}
-              className="h-5 text-xs px-1 py-0"
-              value={editingSectionName}
-              onChange={(e) => setEditingSectionName(e.target.value)}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                if (e.key === "Enter") commitRename();
-                if (e.key === "Escape") setEditingSectionId(null);
-              }}
-              onBlur={commitRename}
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <span
-              className="truncate"
-              onDoubleClick={(e) => {
-                if (!isUngrouped) {
-                  e.stopPropagation();
-                  handleRenameSection(sectionId);
-                }
-              }}
-            >
-              {name}
-            </span>
-          )}
+          <span className="truncate">Ungrouped</span>
         </button>
-        {!isUngrouped && !isEditing && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 opacity-0 group-hover:opacity-100"
-              >
-                <MoreVertical className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleRenameSection(sectionId)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => handleDeleteSection(sectionId)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete section
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
       </div>
     );
   };
@@ -389,27 +496,50 @@ export function Sidebar({
 
       <ScrollArea className="flex-1">
         <div className="p-1">
-          {metadata.sections.map((section) => {
-            const sectionFileList = sectionFiles.get(section.id) ?? [];
-            const isCollapsed = collapsedSections.has(section.id);
-            return (
-              <div key={section.id}>
-                {renderSectionHeader(section.id, section.name)}
-                {!isCollapsed &&
-                  sectionFileList.map((fileInfo) => (
-                    <div key={fileInfo.name} className="pl-3">
-                      {renderFileItem(fileInfo)}
-                    </div>
-                  ))}
-              </div>
-            );
-          })}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={metadata.sections.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {metadata.sections.map((section) => {
+                const sectionFileList = sectionFiles.get(section.id) ?? [];
+                const isCollapsed = collapsedSections.has(section.id);
+                const isEditing = editingSectionId === section.id;
+
+                return (
+                  <SortableSection
+                    key={section.id}
+                    section={section}
+                    isCollapsed={isCollapsed}
+                    isEditing={isEditing}
+                    editingSectionName={editingSectionName}
+                    editInputRef={editInputRef}
+                    onToggle={() => toggleSection(section.id)}
+                    onRename={() => handleRenameSection(section.id)}
+                    onDelete={() => handleDeleteSection(section.id)}
+                    onEditNameChange={setEditingSectionName}
+                    onCommitRename={commitRename}
+                    onCancelEdit={() => setEditingSectionId(null)}
+                  >
+                    {sectionFileList.map((fileInfo) => (
+                      <div key={fileInfo.name} className="pl-3">
+                        {renderFileItem(fileInfo)}
+                      </div>
+                    ))}
+                  </SortableSection>
+                );
+              })}
+            </SortableContext>
+          </DndContext>
 
           {/* Ungrouped section - only show if there are ungrouped files */}
           {ungroupedFiles.length > 0 && (
             <div>
-              {metadata.sections.length > 0 &&
-                renderSectionHeader("__ungrouped__", "Ungrouped", true)}
+              {metadata.sections.length > 0 && renderUngroupedHeader()}
               {!collapsedSections.has("__ungrouped__") &&
                 ungroupedFiles.map((fileInfo) => (
                   <div
