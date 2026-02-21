@@ -135,13 +135,6 @@ function SortableSection({
   return (
     <div ref={setNodeRef} style={style}>
       <div className="group flex items-center gap-1 px-1 py-1 text-xs font-medium text-muted-foreground">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-0.5 -ml-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
-        >
-          <GripVertical className="h-3 w-3" />
-        </div>
         <button
           className="flex items-center gap-1 flex-1 min-w-0 hover:text-foreground"
           onClick={onToggle}
@@ -178,30 +171,39 @@ function SortableSection({
           )}
         </button>
         {!isEditing && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 opacity-0 group-hover:opacity-100"
-              >
-                <MoreVertical className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onRename}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={onDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete section
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <>
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
+            >
+              <GripVertical className="h-3 w-3" />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onRename}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={onDelete}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete section
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         )}
       </div>
       {!isCollapsed && children}
