@@ -121,7 +121,9 @@ export default function App() {
     if (!activeFile) return;
     await api.updateFile(activeFile, editorContent);
     setSavedContent(editorContent);
-  }, [activeFile, editorContent]);
+    // Refresh file list to update HTTP method badge
+    await loadFiles();
+  }, [activeFile, editorContent, loadFiles]);
 
   const handleRun = useCallback(async () => {
     if (!activeFile) return;
@@ -129,6 +131,8 @@ export default function App() {
     if (editorContent !== savedContent) {
       await api.updateFile(activeFile, editorContent);
       setSavedContent(editorContent);
+      // Refresh file list to update HTTP method badge
+      await loadFiles();
     }
     setIsRunning(true);
     setRunResult(null);
@@ -149,7 +153,7 @@ export default function App() {
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, activeEnvironment, editorContent, savedContent]);
+  }, [activeFile, activeEnvironment, editorContent, savedContent, loadFiles]);
 
   const isDirty = editorContent !== savedContent;
 
