@@ -13,7 +13,12 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 // Files
-export const listFiles = () => fetchJSON<string[]>(`${BASE}/files`);
+export interface FileInfo {
+  name: string;
+  method: string | null;
+}
+
+export const listFiles = () => fetchJSON<FileInfo[]>(`${BASE}/files`);
 
 export const createFile = (name: string, content?: string) =>
   fetchJSON<{ name: string }>(`${BASE}/files`, {

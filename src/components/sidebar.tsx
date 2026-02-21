@@ -39,7 +39,8 @@ import {
   Pencil,
   GripVertical,
 } from "lucide-react";
-import type { Metadata, Section } from "@/lib/api";
+import type { Metadata, Section, FileInfo } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
 import {
   DndContext,
   closestCenter,
@@ -59,7 +60,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 interface SidebarProps {
-  files: string[];
+  files: FileInfo[];
   activeFile: string | null;
   onSelectFile: (name: string) => void;
   onCreateFile: (name: string) => void;
@@ -72,6 +73,16 @@ interface SidebarProps {
   onSelectEnvironment: (name: string | null) => void;
   onOpenEnvEditor: () => void;
 }
+
+const METHOD_COLORS: Record<string, string> = {
+  GET: "bg-green-500/15 text-green-600 dark:text-green-400",
+  POST: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  PUT: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  PATCH: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  DELETE: "bg-red-500/15 text-red-600 dark:text-red-400",
+  HEAD: "bg-purple-500/15 text-purple-600 dark:text-purple-400",
+  OPTIONS: "bg-gray-500/15 text-gray-600 dark:text-gray-400",
+};
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
@@ -333,33 +344,42 @@ export function Sidebar({
   };
 
   // Group files by section
-  const sectionFiles = new Map<string, string[]>();
+  const sectionFiles = new Map<string, FileInfo[]>();
   for (const section of metadata.sections) {
     sectionFiles.set(section.id, []);
   }
-  const ungroupedFiles: string[] = [];
+  const ungroupedFiles: FileInfo[] = [];
 
-  for (const file of files) {
-    const sectionId = metadata.fileGroups[file];
+  for (const fileInfo of files) {
+    const sectionId = metadata.fileGroups[fileInfo.name];
     if (sectionId && sectionFiles.has(sectionId)) {
-      sectionFiles.get(sectionId)!.push(file);
+      sectionFiles.get(sectionId)!.push(fileInfo);
     } else {
-      ungroupedFiles.push(file);
+      ungroupedFiles.push(fileInfo);
     }
   }
 
-  const renderFileItem = (file: string) => (
+  const renderFileItem = (fileInfo: FileInfo) => (
     <div
-      key={file}
+      key={fileInfo.name}
       className={`group flex items-center rounded-md px-2 py-1.5 text-sm cursor-pointer ${
-        activeFile === file
+        activeFile === fileInfo.name
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50"
       }`}
-      onClick={() => onSelectFile(file)}
+      onClick={() => onSelectFile(fileInfo.name)}
     >
-      <FileText className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="truncate flex-1">{file}</span>
+      {fileInfo.method ? (
+        <Badge 
+          variant="secondary" 
+          className={`mr-2 h-5 px-1.5 text-[10px] font-semibold shrink-0 ${METHOD_COLORS[fileInfo.method] ?? ""}`}
+        >
+          {fileInfo.method}
+        </Badge>
+      ) : (
+        <FileText className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
+      <span className="truncate flex-1">{fileInfo.name}</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -375,8 +395,8 @@ export function Sidebar({
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
-              setRenamingFile(file);
-              setRenameNewName(file);
+              setRenamingFile(fileInfo.name);
+              setRenameNewName(fileInfo.name);
               setShowRenameDialog(true);
             }}
           >
@@ -392,9 +412,9 @@ export function Sidebar({
                     key={section.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleMoveFile(file, section.id);
+                      handleMoveFile(fileInfo.name, section.id);
                     }}
-                    disabled={metadata.fileGroups[file] === section.id}
+                    disabled={metadata.fileGroups[fileInfo.name] === section.id}
                   >
                     {section.name}
                   </DropdownMenuItem>
@@ -402,9 +422,9 @@ export function Sidebar({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMoveFile(file, null);
+                    handleMoveFile(fileInfo.name, null);
                   }}
-                  disabled={!metadata.fileGroups[file]}
+                  disabled={!metadata.fileGroups[fileInfo.name]}
                 >
                   Ungrouped
                 </DropdownMenuItem>
@@ -415,7 +435,7 @@ export function Sidebar({
             className="text-destructive"
             onClick={(e) => {
               e.stopPropagation();
-              onDeleteFile(file);
+              onDeleteFile(fileInfo.name);
             }}
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -503,9 +523,9 @@ export function Sidebar({
                     onCommitRename={commitRename}
                     onCancelEdit={() => setEditingSectionId(null)}
                   >
-                    {sectionFileList.map((file) => (
-                      <div key={file} className="pl-3">
-                        {renderFileItem(file)}
+                    {sectionFileList.map((fileInfo) => (
+                      <div key={fileInfo.name} className="pl-3">
+                        {renderFileItem(fileInfo)}
                       </div>
                     ))}
                   </SortableSection>
@@ -519,12 +539,12 @@ export function Sidebar({
             <div>
               {metadata.sections.length > 0 && renderUngroupedHeader()}
               {!collapsedSections.has("__ungrouped__") &&
-                ungroupedFiles.map((file) => (
+                ungroupedFiles.map((fileInfo) => (
                   <div
-                    key={file}
+                    key={fileInfo.name}
                     className={metadata.sections.length > 0 ? "pl-3" : ""}
                   >
-                    {renderFileItem(file)}
+                    {renderFileItem(fileInfo)}
                   </div>
                 ))}
             </div>
