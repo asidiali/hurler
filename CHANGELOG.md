@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-03-09
+
+### Added
+- JSON Format button in visual editor body section - pretty-prints JSON with 2-space indent
+- Toast notifications (via Sonner) - shows error details when JSON formatting fails
+
+### Fixed
+- Sanitize invisible whitespace characters in request body (#30) - NBSP, zero-width spaces, and other hidden Unicode characters that break JSON parsing are now automatically removed/replaced
+
 ## [0.7.0] - 2026-02-20
 
 ### Added
