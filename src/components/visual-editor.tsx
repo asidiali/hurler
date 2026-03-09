@@ -9,9 +9,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, WrapText } from "lucide-react";
+import { toast } from "sonner";
 import { parseHurl, serializeHurl, type HurlRequest } from "@/lib/hurl-parser";
 import { CodeEditor } from "@/components/code-editor";
+import { sanitizeJsonWhitespace } from "@/lib/utils";
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 const BODY_METHODS = ["POST", "PUT", "PATCH"];
@@ -112,20 +114,38 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
             <div className="flex flex-col gap-2">
               <CodeEditor
                 value={request.body}
-                onChange={(body) => update({ body })}
+                onChange={(body) => update({ body: sanitizeJsonWhitespace(body) })}
                 language="json"
                 minHeight="120px"
               />
               {request.body && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-fit"
-                  onClick={() => update({ body: "" })}
-                >
-                  <Trash2 className="mr-1 h-3.5 w-3.5" />
-                  Remove Body
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      try {
+                        const parsed = JSON.parse(request.body);
+                        update({ body: JSON.stringify(parsed, null, 2) });
+                      } catch (e) {
+                        toast.error("Invalid JSON", {
+                          description: e instanceof Error ? e.message : "Could not parse JSON",
+                        });
+                      }
+                    }}
+                  >
+                    <WrapText className="mr-1 h-3.5 w-3.5" />
+                    Format
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => update({ body: "" })}
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    Remove
+                  </Button>
+                </div>
               )}
             </div>
           ) : (

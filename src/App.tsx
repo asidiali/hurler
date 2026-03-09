@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/app-layout";
 import { Sidebar } from "@/components/sidebar";
@@ -207,6 +208,7 @@ export default function App() {
         }}
         onSkip={() => setShowEnvPicker(false)}
       />
+      <Toaster position="bottom-right" richColors />
     </TooltipProvider>
   );
 }
