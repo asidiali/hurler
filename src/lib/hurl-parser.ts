@@ -1,3 +1,5 @@
+import { sanitizeJsonWhitespace } from "./utils";
+
 export interface HurlRequest {
   method: string;
   url: string;
@@ -133,10 +135,10 @@ export function serializeHurl(request: HurlRequest): string {
     lines.push(`${header.key}: ${header.value}`);
   }
 
-  // Body
+  // Body (sanitize invisible whitespace that breaks JSON parsing)
   if (request.body.trim()) {
     lines.push("");
-    lines.push(request.body);
+    lines.push(sanitizeJsonWhitespace(request.body));
   }
 
   // Response section
