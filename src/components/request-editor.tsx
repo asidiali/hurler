@@ -84,7 +84,7 @@ export function RequestEditor({
   const onSaveRef = useRef(onSave);
   const contentRef = useRef(content);
   const theme = useTheme();
-  const { variables: envVars } = useEnvVariables();
+  const { variables: envVars, secrets } = useEnvVariables();
 
   onChangeRef.current = onChange;
   onRunRef.current = onRun;
@@ -142,7 +142,7 @@ export function RequestEditor({
         }),
         EditorView.lineWrapping,
         // Add variable highlighting and autocomplete
-        variableSupport(envVars),
+        variableSupport(envVars, secrets),
       ],
     });
 
@@ -155,7 +155,7 @@ export function RequestEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [fileName, theme, envVars]);
+  }, [fileName, theme, envVars, secrets]);
 
   // Sync content into existing editor when it changes externally
   useEffect(() => {

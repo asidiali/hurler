@@ -19,27 +19,36 @@ export const envVariablesFacet = Facet.define<string[], string[]>({
   combine: (values) => values.flat(),
 });
 
+// Facet to provide secrets list (for distinguishing in autocomplete)
+export const envSecretsFacet = Facet.define<string[], string[]>({
+  combine: (values) => values.flat(),
+});
+
 // Theme for variable highlighting
 const variableTheme = EditorView.baseTheme({
   ".cm-variable-defined": {
-    backgroundColor: "rgba(34, 197, 94, 0.2)",
-    color: "rgb(22, 163, 74)",
-    borderRadius: "2px",
-    padding: "0 2px",
+    backgroundColor: "rgba(34, 197, 94, 0.3)",
+    color: "rgb(21, 128, 61)",
+    borderRadius: "3px",
+    padding: "1px 3px",
+    fontWeight: "500",
   },
   ".cm-variable-undefined": {
-    backgroundColor: "rgba(239, 68, 68, 0.2)",
-    color: "rgb(220, 38, 38)",
-    borderRadius: "2px",
-    padding: "0 2px",
+    backgroundColor: "rgba(239, 68, 68, 0.3)",
+    color: "rgb(185, 28, 28)",
+    borderRadius: "3px",
+    padding: "1px 3px",
+    fontWeight: "500",
+    textDecoration: "wavy underline rgba(239, 68, 68, 0.6)",
   },
   ".dark .cm-variable-defined": {
-    backgroundColor: "rgba(34, 197, 94, 0.25)",
-    color: "rgb(74, 222, 128)",
+    backgroundColor: "rgba(34, 197, 94, 0.35)",
+    color: "rgb(134, 239, 172)",
   },
   ".dark .cm-variable-undefined": {
-    backgroundColor: "rgba(239, 68, 68, 0.25)",
-    color: "rgb(248, 113, 113)",
+    backgroundColor: "rgba(239, 68, 68, 0.35)",
+    color: "rgb(252, 165, 165)",
+    textDecoration: "wavy underline rgba(252, 165, 165, 0.6)",
   },
 });
 
@@ -98,6 +107,7 @@ function variableCompletions(context: CompletionContext): CompletionResult | nul
   if (!match) return null;
 
   const envVars = context.state.facet(envVariablesFacet);
+  const secrets = context.state.facet(envSecretsFacet);
   if (envVars.length === 0) return null;
 
   const partial = match.text.slice(2).toLowerCase();
@@ -108,7 +118,7 @@ function variableCompletions(context: CompletionContext): CompletionResult | nul
       label: v,
       type: "variable",
       apply: v + "}}",
-      detail: "environment variable",
+      detail: secrets.includes(v) ? "environment secret" : "environment variable",
     }));
 
   if (options.length === 0) return null;
@@ -121,9 +131,10 @@ function variableCompletions(context: CompletionContext): CompletionResult | nul
 }
 
 // Combined extension for variable support
-export function variableSupport(envVars: string[] = []) {
+export function variableSupport(envVars: string[] = [], secrets: string[] = []) {
   return [
     envVariablesFacet.of(envVars),
+    envSecretsFacet.of(secrets),
     variableTheme,
     variableHighlighter,
     autocompletion({

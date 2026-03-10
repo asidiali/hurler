@@ -81,7 +81,7 @@ export function CodeEditor({
   const onChangeRef = useRef(onChange);
   const valueRef = useRef(value);
   const theme = useTheme();
-  const { variables: envVars } = useEnvVariables();
+  const { variables: envVars, secrets } = useEnvVariables();
 
   onChangeRef.current = onChange;
   valueRef.current = value;
@@ -123,7 +123,7 @@ export function CodeEditor({
       }),
       EditorView.lineWrapping,
       // Add variable highlighting and autocomplete
-      variableSupport(envVars),
+      variableSupport(envVars, secrets),
     ];
 
     // Add language support (use JavaScript for JSON syntax highlighting)
@@ -145,7 +145,7 @@ export function CodeEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [language, minHeight, theme, envVars]);
+  }, [language, minHeight, theme, envVars, secrets]);
 
   // Sync value changes from parent
   useEffect(() => {

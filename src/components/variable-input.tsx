@@ -51,10 +51,10 @@ function renderHighlightedText(text: string, matches: VariableMatch[]) {
       <span
         key={`var-${i}`}
         className={cn(
-          "rounded px-0.5",
+          "rounded px-0.5 font-medium",
           match.isDefined
-            ? "bg-green-500/20 text-green-700 dark:text-green-400"
-            : "bg-red-500/20 text-red-700 dark:text-red-400"
+            ? "bg-green-500/30 text-green-800 dark:bg-green-500/40 dark:text-green-300"
+            : "bg-red-500/30 text-red-800 underline decoration-wavy decoration-red-500/60 dark:bg-red-500/40 dark:text-red-300"
         )}
       >
         {text.slice(match.start, match.end)}
@@ -77,7 +77,7 @@ export function VariableInput({
   placeholder,
   className,
 }: VariableInputProps) {
-  const { variables, environment } = useEnvVariables();
+  const { variables, secrets, environment } = useEnvVariables();
   const [isFocused, setIsFocused] = useState(false);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
@@ -175,7 +175,7 @@ export function VariableInput({
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full">
       {/* Highlighted overlay */}
       <div
         className={cn(
@@ -217,16 +217,21 @@ export function VariableInput({
             <div
               key={v}
               className={cn(
-                "cursor-pointer rounded-sm px-2 py-1.5 text-sm font-mono",
+                "cursor-pointer rounded-sm px-2 py-1.5 text-sm font-mono flex items-center justify-between gap-3",
                 i === autocompleteIndex
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
               )}
               onClick={() => handleSelect(v)}
             >
-              <span className="text-muted-foreground">{"{{"}</span>
-              {v}
-              <span className="text-muted-foreground">{"}}"}</span>
+              <span>
+                <span className="text-muted-foreground">{"{{"}</span>
+                {v}
+                <span className="text-muted-foreground">{"}}"}</span>
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {secrets.includes(v) ? "secret" : "variable"}
+              </span>
             </div>
           ))}
         </div>
