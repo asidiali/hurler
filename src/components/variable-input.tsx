@@ -94,6 +94,7 @@ export function VariableInput({
   const autocompleteState = useMemo(() => {
     // Find if cursor is after {{ but before }}
     const beforeCursor = value.slice(0, cursorPosition);
+    const afterCursor = value.slice(cursorPosition);
     const lastOpenBrace = beforeCursor.lastIndexOf("{{");
     
     if (lastOpenBrace === -1) return null;
@@ -105,6 +106,21 @@ export function VariableInput({
     // Get the partial variable name typed so far
     const partial = afterOpen.toLowerCase();
     
+    // Check if this is already a complete variable (cursor inside {{VAR}})
+    // Look for }} after cursor that would close this variable
+    const closingBracePos = afterCursor.indexOf("}}");
+    const nextOpenBrace = afterCursor.indexOf("{{");
+    
+    // If there's a }} before any {{ after cursor, we're inside a complete variable
+    if (closingBracePos !== -1 && (nextOpenBrace === -1 || closingBracePos < nextOpenBrace)) {
+      // Check if the text between cursor and }} is just more variable name chars
+      const textBeforeClose = afterCursor.slice(0, closingBracePos);
+      if (/^\w*$/.test(textBeforeClose)) {
+        // We're inside a complete variable, don't show autocomplete
+        return null;
+      }
+    }
+    
     // Filter matching variables
     const filtered = variables.filter((v) =>
       v.toLowerCase().startsWith(partial)
@@ -112,10 +128,20 @@ export function VariableInput({
     
     if (filtered.length === 0) return null;
     
+    // Determine how many closing braces we need to add
+    let bracesToAdd = "}}";
+    if (afterCursor.startsWith("}}")) {
+      bracesToAdd = "";
+    } else if (afterCursor.startsWith("}")) {
+      bracesToAdd = "}";
+    }
+    
     return {
       insertAt: lastOpenBrace + 2,
       partial,
       suggestions: filtered,
+      bracesToAdd,
+      charOffset: lastOpenBrace, // For positioning dropdown
     };
   }, [value, cursorPosition, variables]);
 
@@ -131,14 +157,15 @@ export function VariableInput({
   const handleSelect = (varName: string) => {
     if (!autocompleteState) return;
     
-    // Replace from insertAt to cursor with the full variable name + }}
+    // Replace from insertAt to cursor with the full variable name + appropriate braces
     const before = value.slice(0, autocompleteState.insertAt);
     const after = value.slice(cursorPosition);
-    const newValue = before + varName + "}}" + after;
+    const bracesToAdd = autocompleteState.bracesToAdd;
+    const newValue = before + varName + bracesToAdd + after;
     onChange(newValue);
     
-    // Move cursor after the inserted variable
-    const newCursorPos = autocompleteState.insertAt + varName.length + 2;
+    // Move cursor after the inserted variable (after the closing braces)
+    const newCursorPos = autocompleteState.insertAt + varName.length + bracesToAdd.length;
     setTimeout(() => {
       inputRef.current?.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
@@ -210,9 +237,14 @@ export function VariableInput({
         )}
       />
       
-      {/* Autocomplete dropdown */}
+      {/* Autocomplete dropdown - positioned under the {{ */}
       {showAutocomplete && autocompleteState && (
-        <div className="absolute left-0 top-full z-50 mt-1 max-h-48 min-w-[200px] overflow-auto rounded-md border bg-popover p-1 shadow-md">
+        <div 
+          className="absolute top-full z-50 mt-1 max-h-48 min-w-[200px] overflow-auto rounded-md border bg-popover p-1 shadow-md"
+          style={{ 
+            left: `${Math.min(autocompleteState.charOffset * 8 + 12, (containerRef.current?.offsetWidth ?? 200) - 220)}px` 
+          }}
+        >
           {autocompleteState.suggestions.map((v, i) => (
             <div
               key={v}
