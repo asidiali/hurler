@@ -51,10 +51,10 @@ function renderHighlightedText(text: string, matches: VariableMatch[]) {
       <span
         key={`var-${i}`}
         className={cn(
-          "rounded px-0.5 font-medium",
+          "rounded px-0.5 font-semibold",
           match.isDefined
-            ? "bg-green-500/30 text-green-800 dark:bg-green-500/40 dark:text-green-300"
-            : "bg-red-500/30 text-red-800 underline decoration-wavy decoration-red-500/60 dark:bg-red-500/40 dark:text-red-300"
+            ? "bg-emerald-500/40 text-emerald-700 dark:bg-emerald-400/50 dark:text-emerald-200"
+            : "bg-rose-500/40 text-rose-700 underline decoration-wavy decoration-rose-500 dark:bg-rose-400/50 dark:text-rose-200"
         )}
       >
         {text.slice(match.start, match.end)}
@@ -82,8 +82,10 @@ export function VariableInput({
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [dropdownLeft, setDropdownLeft] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
 
   const matches = useMemo(
     () => parseVariables(value, variables),
@@ -104,7 +106,8 @@ export function VariableInput({
     if (afterOpen.includes("}}")) return null;
     
     // Get the partial variable name typed so far
-    const partial = afterOpen.toLowerCase();
+    const partial = afterOpen;
+    const partialLower = partial.toLowerCase();
     
     // Check if this is already a complete variable (cursor inside {{VAR}})
     // Look for }} after cursor that would close this variable
@@ -116,28 +119,38 @@ export function VariableInput({
       // Check if the text between cursor and }} is just more variable name chars
       const textBeforeClose = afterCursor.slice(0, closingBracePos);
       if (/^\w*$/.test(textBeforeClose)) {
-        // We're inside a complete variable, don't show autocomplete
-        return null;
+        // Full variable name from {{ to }}
+        const fullVarName = partial + textBeforeClose;
+        // If this exactly matches a variable, don't show autocomplete
+        if (variables.includes(fullVarName)) {
+          return null;
+        }
       }
     }
     
     // Filter matching variables
     const filtered = variables.filter((v) =>
-      v.toLowerCase().startsWith(partial)
+      v.toLowerCase().startsWith(partialLower)
     );
     
     if (filtered.length === 0) return null;
     
+    // Determine what text after cursor belongs to current partial and should be replaced
+    // Match any remaining word characters that are part of the variable name
+    const remainingPartial = afterCursor.match(/^(\w*)/)?.[1] ?? "";
+    const afterRemaining = afterCursor.slice(remainingPartial.length);
+    
     // Determine how many closing braces we need to add
     let bracesToAdd = "}}";
-    if (afterCursor.startsWith("}}")) {
+    if (afterRemaining.startsWith("}}")) {
       bracesToAdd = "";
-    } else if (afterCursor.startsWith("}")) {
+    } else if (afterRemaining.startsWith("}")) {
       bracesToAdd = "}";
     }
     
     return {
       insertAt: lastOpenBrace + 2,
+      replaceEnd: cursorPosition + remainingPartial.length, // Where the replacement should end
       partial,
       suggestions: filtered,
       bracesToAdd,
@@ -149,17 +162,28 @@ export function VariableInput({
     if (autocompleteState && isFocused && environment) {
       setShowAutocomplete(true);
       setAutocompleteIndex(0);
+      
+      // Measure the text width to position dropdown under the {{
+      if (measureRef.current && containerRef.current) {
+        const textBeforeBrace = value.slice(0, autocompleteState.charOffset);
+        measureRef.current.textContent = textBeforeBrace;
+        const textWidth = measureRef.current.offsetWidth;
+        const containerWidth = containerRef.current.offsetWidth;
+        // Position dropdown, but keep it within container bounds
+        const maxLeft = Math.max(0, containerWidth - 220);
+        setDropdownLeft(Math.min(textWidth + 12, maxLeft)); // 12px for padding
+      }
     } else {
       setShowAutocomplete(false);
     }
-  }, [autocompleteState, isFocused, environment]);
+  }, [autocompleteState, isFocused, environment, value]);
 
   const handleSelect = (varName: string) => {
     if (!autocompleteState) return;
     
-    // Replace from insertAt to cursor with the full variable name + appropriate braces
+    // Replace from insertAt to replaceEnd with the full variable name + appropriate braces
     const before = value.slice(0, autocompleteState.insertAt);
-    const after = value.slice(cursorPosition);
+    const after = value.slice(autocompleteState.replaceEnd);
     const bracesToAdd = autocompleteState.bracesToAdd;
     const newValue = before + varName + bracesToAdd + after;
     onChange(newValue);
@@ -202,13 +226,17 @@ export function VariableInput({
   };
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className={cn("relative", className)}>
+      {/* Hidden span for measuring text width */}
+      <span
+        ref={measureRef}
+        className="pointer-events-none invisible absolute whitespace-pre px-3 font-mono text-sm"
+        aria-hidden
+      />
+      
       {/* Highlighted overlay */}
       <div
-        className={cn(
-          "pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-3 py-2 font-mono text-sm",
-          className
-        )}
+        className="pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-3 py-2 font-mono text-sm"
         aria-hidden
       >
         {value ? renderHighlightedText(value, matches) : (
@@ -231,19 +259,14 @@ export function VariableInput({
           setTimeout(() => setIsFocused(false), 150);
         }}
         placeholder=""
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-transparent caret-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono",
-          className
-        )}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-transparent caret-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
       />
       
       {/* Autocomplete dropdown - positioned under the {{ */}
       {showAutocomplete && autocompleteState && (
         <div 
           className="absolute top-full z-50 mt-1 max-h-48 min-w-[200px] overflow-auto rounded-md border bg-popover p-1 shadow-md"
-          style={{ 
-            left: `${Math.min(autocompleteState.charOffset * 8 + 12, (containerRef.current?.offsetWidth ?? 200) - 220)}px` 
-          }}
+          style={{ left: `${dropdownLeft}px` }}
         >
           {autocompleteState.suggestions.map((v, i) => (
             <div
@@ -262,7 +285,7 @@ export function VariableInput({
                 <span className="text-muted-foreground">{"}}"}</span>
               </span>
               <span className="text-xs text-muted-foreground">
-                {secrets.includes(v) ? "secret" : "variable"}
+                {secrets.includes(v) ? "environment secret" : "environment variable"}
               </span>
             </div>
           ))}
