@@ -24,31 +24,31 @@ export const envSecretsFacet = Facet.define<string[], string[]>({
   combine: (values) => values.flat(),
 });
 
-// Theme for variable highlighting
+// Theme for variable highlighting (emerald for defined, rose for undefined)
 const variableTheme = EditorView.baseTheme({
   ".cm-variable-defined": {
-    backgroundColor: "rgba(34, 197, 94, 0.3)",
-    color: "rgb(21, 128, 61)",
+    backgroundColor: "rgba(16, 185, 129, 0.4)", // emerald-500
+    color: "rgb(4, 120, 87)", // emerald-700
     borderRadius: "3px",
     padding: "1px 3px",
-    fontWeight: "500",
+    fontWeight: "600",
   },
   ".cm-variable-undefined": {
-    backgroundColor: "rgba(239, 68, 68, 0.3)",
-    color: "rgb(185, 28, 28)",
+    backgroundColor: "rgba(244, 63, 94, 0.4)", // rose-500
+    color: "rgb(190, 18, 60)", // rose-700
     borderRadius: "3px",
     padding: "1px 3px",
-    fontWeight: "500",
-    textDecoration: "wavy underline rgba(239, 68, 68, 0.6)",
+    fontWeight: "600",
+    textDecoration: "wavy underline rgba(244, 63, 94, 0.8)",
   },
   ".dark .cm-variable-defined": {
-    backgroundColor: "rgba(34, 197, 94, 0.35)",
-    color: "rgb(134, 239, 172)",
+    backgroundColor: "rgba(52, 211, 153, 0.5)", // emerald-400
+    color: "rgb(167, 243, 208)", // emerald-200
   },
   ".dark .cm-variable-undefined": {
-    backgroundColor: "rgba(239, 68, 68, 0.35)",
-    color: "rgb(252, 165, 165)",
-    textDecoration: "wavy underline rgba(252, 165, 165, 0.6)",
+    backgroundColor: "rgba(251, 113, 133, 0.5)", // rose-400
+    color: "rgb(254, 205, 211)", // rose-200
+    textDecoration: "wavy underline rgba(251, 113, 133, 0.8)",
   },
 });
 
@@ -111,13 +111,25 @@ function variableCompletions(context: CompletionContext): CompletionResult | nul
   if (envVars.length === 0) return null;
 
   const partial = match.text.slice(2).toLowerCase();
+  
+  // Check what's after the cursor to determine how many braces to add
+  const pos = context.pos;
+  const docLength = context.state.doc.length;
+  const afterCursor = context.state.sliceDoc(pos, Math.min(pos + 2, docLength));
+  
+  let bracesToAdd = "}}";
+  if (afterCursor.startsWith("}}")) {
+    bracesToAdd = "";
+  } else if (afterCursor.startsWith("}")) {
+    bracesToAdd = "}";
+  }
 
   const options = envVars
     .filter((v) => v.toLowerCase().startsWith(partial))
     .map((v) => ({
       label: v,
       type: "variable",
-      apply: v + "}}",
+      apply: v + bracesToAdd,
       detail: secrets.includes(v) ? "environment secret" : "environment variable",
     }));
 
