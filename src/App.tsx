@@ -7,6 +7,7 @@ import { RequestEditor } from "@/components/request-editor";
 import { ResponsePanel } from "@/components/response-panel";
 import { EnvEditor } from "@/components/env-editor";
 import { EnvPickerModal } from "@/components/env-picker-modal";
+import { EnvProvider } from "@/lib/env-context";
 import * as api from "@/lib/api";
 import type { RunResult, Metadata, FileInfo } from "@/lib/api";
 
@@ -159,6 +160,7 @@ export default function App() {
   const isDirty = editorContent !== savedContent;
 
   return (
+    <EnvProvider environment={activeEnvironment}>
     <TooltipProvider>
       <AppLayout
         sidebar={
@@ -210,5 +212,6 @@ export default function App() {
       />
       <Toaster position="bottom-right" richColors />
     </TooltipProvider>
+    </EnvProvider>
   );
 }
