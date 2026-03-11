@@ -12,6 +12,13 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// Project
+export interface ProjectInfo {
+  name: string;
+}
+
+export const getProjectInfo = () => fetchJSON<ProjectInfo>(`${BASE}/project`);
+
 // Files
 export interface FileInfo {
   name: string;

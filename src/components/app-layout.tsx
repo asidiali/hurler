@@ -1,6 +1,7 @@
 import { type ReactNode, useState, useCallback, useRef } from "react";
 
 interface AppLayoutProps {
+  projectName?: string;
   sidebar: ReactNode;
   editor: ReactNode;
   response: ReactNode;
@@ -64,7 +65,7 @@ function loadNumber(key: string, fallback: number): number {
   return fallback;
 }
 
-export function AppLayout({ sidebar, editor, response }: AppLayoutProps) {
+export function AppLayout({ projectName = "Hurler", sidebar, editor, response }: AppLayoutProps) {
   const [sidebarWidth, setSidebarWidth] = useState(() => loadNumber("hurler:sidebarWidth", 260));
   const [editorRatio, setEditorRatio] = useState(() => loadNumber("hurler:editorRatio", 0.55));
   const mainRef = useRef<HTMLDivElement>(null);
@@ -90,7 +91,7 @@ export function AppLayout({ sidebar, editor, response }: AppLayoutProps) {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       <div className="h-9 shrink-0 flex items-center px-3 border-b bg-muted/40">
-        <span className="text-sm font-semibold tracking-tight">Hurler</span>
+        <span className="text-sm font-semibold tracking-tight">{projectName}</span>
       </div>
       <div className="flex flex-1 min-h-0 overflow-hidden">
       <div style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
