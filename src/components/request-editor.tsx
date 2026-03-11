@@ -10,6 +10,8 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "@codemirror/language";
 import { useTheme } from "@/lib/theme-context";
+import { useEnvVariables } from "@/lib/env-context";
+import { variableSupport } from "@/lib/codemirror-variables";
 
 // Light theme for CodeMirror
 const lightTheme = EditorView.theme({
@@ -82,13 +84,14 @@ export function RequestEditor({
   const onSaveRef = useRef(onSave);
   const contentRef = useRef(content);
   const theme = useTheme();
+  const { variables: envVars, secrets } = useEnvVariables();
 
   onChangeRef.current = onChange;
   onRunRef.current = onRun;
   onSaveRef.current = onSave;
   contentRef.current = content;
 
-  // Create/destroy editor when fileName or theme changes
+  // Create/destroy editor when fileName, theme, or envVars changes
   useEffect(() => {
     if (!fileName || !editorRef.current) {
       if (viewRef.current) {
@@ -138,6 +141,8 @@ export function RequestEditor({
           ".cm-gutters": { fontFamily: "'JetBrains Mono', 'Fira Code', monospace" },
         }),
         EditorView.lineWrapping,
+        // Add variable highlighting and autocomplete
+        variableSupport(envVars, secrets),
       ],
     });
 
@@ -150,7 +155,7 @@ export function RequestEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [fileName, theme]);
+  }, [fileName, theme, envVars, secrets]);
 
   // Sync content into existing editor when it changes externally
   useEffect(() => {

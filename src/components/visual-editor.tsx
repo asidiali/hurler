@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
+import { VariableInput } from "@/components/variable-input";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -50,11 +51,11 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
               ))}
             </SelectContent>
           </Select>
-          <Input
-            className="flex-1 font-mono text-sm"
+          <VariableInput
+            className="flex-1 text-sm"
             placeholder="https://example.com/api"
             value={request.url}
-            onChange={(e) => update({ url: e.target.value })}
+            onChange={(url) => update({ url })}
           />
         </div>
 
@@ -72,13 +73,13 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                   update({ headers });
                 }}
               />
-              <Input
-                className="flex-[2] font-mono text-sm"
+              <VariableInput
+                className="flex-[2] text-sm"
                 placeholder="Value"
                 value={header.value}
-                onChange={(e) => {
+                onChange={(value) => {
                   const headers = [...request.headers];
-                  headers[i] = { ...headers[i], value: e.target.value };
+                  headers[i] = { ...headers[i], value };
                   update({ headers });
                 }}
               />

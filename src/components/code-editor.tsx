@@ -16,6 +16,8 @@ import {
 } from "@codemirror/language";
 import { javascript } from "@codemirror/lang-javascript";
 import { useTheme } from "@/lib/theme-context";
+import { useEnvVariables } from "@/lib/env-context";
+import { variableSupport } from "@/lib/codemirror-variables";
 
 // Light theme for CodeMirror
 const lightTheme = EditorView.theme({
@@ -79,11 +81,12 @@ export function CodeEditor({
   const onChangeRef = useRef(onChange);
   const valueRef = useRef(value);
   const theme = useTheme();
+  const { variables: envVars, secrets } = useEnvVariables();
 
   onChangeRef.current = onChange;
   valueRef.current = value;
 
-  // Create editor on mount or when theme changes
+  // Create editor on mount or when theme/envVars changes
   useEffect(() => {
     if (!editorRef.current) return;
 
@@ -119,6 +122,8 @@ export function CodeEditor({
         },
       }),
       EditorView.lineWrapping,
+      // Add variable highlighting and autocomplete
+      variableSupport(envVars, secrets),
     ];
 
     // Add language support (use JavaScript for JSON syntax highlighting)
@@ -140,7 +145,7 @@ export function CodeEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [language, minHeight, theme]);
+  }, [language, minHeight, theme, envVars, secrets]);
 
   // Sync value changes from parent
   useEffect(() => {
