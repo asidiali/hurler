@@ -28,7 +28,7 @@ npx hurler [options]
 | Flag | Description |
 |---|---|
 | `--port`, `-p` | Port to run the server on (default: `4000`) |
-| `--open` | Open the browser automatically |
+| `--open`, `-o` | Open the browser automatically |
 
 You can also set the port via the `PORT` environment variable.
 
@@ -37,7 +37,8 @@ You can also set the port via the `PORT` environment variable.
 ```sh
 npx hurler                  # start on port 4000
 npx hurler -p 8080          # start on port 8080
-npx hurler --open           # start and open browser
+npx hurler -o               # start and open browser
+npx hurler -p 8080 -o       # combine flags
 ```
 
 ## Data Storage
