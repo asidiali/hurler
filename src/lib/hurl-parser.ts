@@ -28,15 +28,16 @@ export function parseHurl(content: string): HurlRequest {
   }
   if (lines.length === 0) return result;
 
-  // Line 1: METHOD URL
-  const firstLine = lines[0].trim();
-  if (firstLine) {
+  // Line 1: METHOD URL (preserve URL exactly, including trailing spaces)
+  const firstLine = lines[0];
+  const firstLineTrimmed = firstLine.trim();
+  if (firstLineTrimmed) {
     const spaceIdx = firstLine.indexOf(" ");
     if (spaceIdx !== -1) {
-      result.method = firstLine.substring(0, spaceIdx).toUpperCase();
+      result.method = firstLine.substring(0, spaceIdx).trim().toUpperCase();
       result.url = firstLine.substring(spaceIdx + 1);
     } else {
-      result.method = firstLine.toUpperCase();
+      result.method = firstLineTrimmed.toUpperCase();
     }
   }
 
@@ -56,9 +57,12 @@ export function parseHurl(content: string): HurlRequest {
 
     const colonIdx = trimmed.indexOf(":");
     if (colonIdx >= 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+      // Preserve header value exactly (including trailing spaces)
+      // But trim the leading space after colon if present
+      const rawValue = trimmed.substring(colonIdx + 1);
       result.headers.push({
         key: trimmed.substring(0, colonIdx).trim(),
-        value: trimmed.substring(colonIdx + 1).trim(),
+        value: rawValue.startsWith(" ") ? rawValue.substring(1) : rawValue,
       });
       i++;
     } else {
