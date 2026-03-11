@@ -73,6 +73,7 @@ interface SidebarProps {
   onSelectEnvironment: (name: string | null) => void;
   onOpenEnvEditor: () => void;
   pendingFiles?: Set<string>;
+  readOnly?: boolean;
 }
 
 const METHOD_COLORS: Record<string, string> = {
@@ -102,6 +103,7 @@ interface SortableSectionProps {
   onCommitRename: () => void;
   onCancelEdit: () => void;
   children: React.ReactNode;
+  readOnly?: boolean;
 }
 
 function SortableSection({
@@ -117,6 +119,7 @@ function SortableSection({
   onCommitRename,
   onCancelEdit,
   children,
+  readOnly,
 }: SortableSectionProps) {
   const {
     attributes,
@@ -173,13 +176,15 @@ function SortableSection({
         </button>
         {!isEditing && (
           <>
-            <div
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
-            >
-              <GripVertical className="h-3 w-3" />
-            </div>
+            {!readOnly && (
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
+              >
+                <GripVertical className="h-3 w-3" />
+              </div>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -191,13 +196,14 @@ function SortableSection({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onRename}>
+                <DropdownMenuItem onClick={onRename} disabled={readOnly}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={onDelete}
+                  disabled={readOnly}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete section
@@ -226,6 +232,7 @@ export function Sidebar({
   onSelectEnvironment,
   onOpenEnvEditor,
   pendingFiles,
+  readOnly,
 }: SidebarProps) {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newFileName, setNewFileName] = useState("");
@@ -400,6 +407,7 @@ export function Sidebar({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
+            disabled={readOnly}
             onClick={(e) => {
               e.stopPropagation();
               setRenamingFile(fileInfo.name);
@@ -412,7 +420,7 @@ export function Sidebar({
           </DropdownMenuItem>
           {metadata.sections.length > 0 && (
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Move to</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger disabled={readOnly}>Move to</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 {metadata.sections.map((section) => (
                   <DropdownMenuItem
@@ -421,7 +429,7 @@ export function Sidebar({
                       e.stopPropagation();
                       handleMoveFile(fileInfo.name, section.id);
                     }}
-                    disabled={metadata.fileGroups[fileInfo.name] === section.id}
+                    disabled={readOnly || metadata.fileGroups[fileInfo.name] === section.id}
                   >
                     {section.name}
                   </DropdownMenuItem>
@@ -431,7 +439,7 @@ export function Sidebar({
                     e.stopPropagation();
                     handleMoveFile(fileInfo.name, null);
                   }}
-                  disabled={!metadata.fileGroups[fileInfo.name]}
+                  disabled={readOnly || !metadata.fileGroups[fileInfo.name]}
                 >
                   Ungrouped
                 </DropdownMenuItem>
@@ -440,6 +448,7 @@ export function Sidebar({
           )}
           <DropdownMenuItem
             className="text-destructive"
+            disabled={readOnly}
             onClick={(e) => {
               e.stopPropagation();
               onDeleteFile(fileInfo.name);
@@ -484,6 +493,7 @@ export function Sidebar({
             className="h-7 w-7"
             onClick={handleCreateSection}
             title="New section"
+            disabled={readOnly}
           >
             <FolderPlus className="h-4 w-4" />
           </Button>
@@ -493,6 +503,7 @@ export function Sidebar({
             className="h-7 w-7"
             onClick={() => setShowNewDialog(true)}
             title="New request"
+            disabled={readOnly}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -529,6 +540,7 @@ export function Sidebar({
                     onEditNameChange={setEditingSectionName}
                     onCommitRename={commitRename}
                     onCancelEdit={() => setEditingSectionId(null)}
+                    readOnly={readOnly}
                   >
                     {sectionFileList.map((fileInfo) => (
                       <div key={fileInfo.name} className="pl-3 min-w-0">

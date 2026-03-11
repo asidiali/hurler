@@ -15,6 +15,7 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 // Project
 export interface ProjectInfo {
   name: string;
+  readOnly: boolean;
 }
 
 export const getProjectInfo = () => fetchJSON<ProjectInfo>(`${BASE}/project`);

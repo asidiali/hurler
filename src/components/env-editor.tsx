@@ -32,6 +32,7 @@ interface EnvEditorProps {
   onRefresh: () => void;
   onEnvChange?: () => void;
   activeEnvironment?: string | null;
+  readOnly?: boolean;
 }
 
 interface EnvVar {
@@ -46,6 +47,7 @@ export function EnvEditor({
   onRefresh,
   onEnvChange,
   activeEnvironment,
+  readOnly,
 }: EnvEditorProps) {
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   
@@ -203,11 +205,12 @@ export function EnvEditor({
               variant="outline"
               size="icon"
               onClick={() => setShowNewEnvDialog(true)}
+              disabled={readOnly}
             >
               <Plus className="h-4 w-4" />
             </Button>
             {selectedEnv && (
-              <Button variant="destructive" size="icon" onClick={handleDeleteEnv}>
+              <Button variant="destructive" size="icon" onClick={handleDeleteEnv} disabled={readOnly}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
@@ -243,6 +246,7 @@ export function EnvEditor({
                         value={v.key}
                         onChange={(e) => updateVariable(i, "key", e.target.value)}
                         className="h-8 text-sm font-mono"
+                        disabled={readOnly}
                       />
                       <Input
                         placeholder="value"
@@ -251,12 +255,14 @@ export function EnvEditor({
                           updateVariable(i, "value", e.target.value)
                         }
                         className="h-8 text-sm font-mono"
+                        disabled={readOnly}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => removeVariable(i)}
+                        disabled={readOnly}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
@@ -267,6 +273,7 @@ export function EnvEditor({
                     size="sm"
                     onClick={addVariable}
                     className="w-full"
+                    disabled={readOnly}
                   >
                     <Plus className="mr-1 h-3.5 w-3.5" />
                     Add Variable
@@ -301,6 +308,7 @@ export function EnvEditor({
                         value={s.key}
                         onChange={(e) => updateSecret(i, "key", e.target.value)}
                         className="h-8 text-sm font-mono"
+                        disabled={readOnly}
                       />
                       <Input
                         placeholder="value"
@@ -310,6 +318,7 @@ export function EnvEditor({
                           updateSecret(i, "value", e.target.value)
                         }
                         className="h-8 text-sm font-mono"
+                        disabled={readOnly}
                       />
                       <div className="flex gap-1">
                         <Button
@@ -329,6 +338,7 @@ export function EnvEditor({
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => removeSecret(i)}
+                          disabled={readOnly}
                         >
                           <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                         </Button>
@@ -340,6 +350,7 @@ export function EnvEditor({
                     size="sm"
                     onClick={addSecret}
                     className="w-full"
+                    disabled={readOnly}
                   >
                     <Plus className="mr-1 h-3.5 w-3.5" />
                     Add Secret
@@ -354,7 +365,7 @@ export function EnvEditor({
               Close
             </Button>
             {selectedEnv && (
-              <Button onClick={handleSave} disabled={!isDirty}>
+              <Button onClick={handleSave} disabled={!isDirty || readOnly}>
                 <Save className="mr-1 h-3.5 w-3.5" />
                 Save
               </Button>

@@ -25,6 +25,7 @@ const { values } = parseArgs({
   options: {
     port: { type: "string", short: "p" },
     open: { type: "boolean" },
+    "read-only": { type: "boolean" },
   },
 });
 
@@ -34,7 +35,7 @@ const port = parseInt(values.port ?? process.env.PORT ?? "4000", 10);
 mkdirSync(path.join(dataDir, "collections"), { recursive: true });
 mkdirSync(path.join(dataDir, "environments"), { recursive: true });
 
-const app = createApp(dataDir);
+const app = createApp(dataDir, undefined, values["read-only"]);
 
 app.listen(port, async () => {
   const url = `http://localhost:${port}`;

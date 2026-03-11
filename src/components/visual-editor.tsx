@@ -22,12 +22,14 @@ const BODY_METHODS = ["POST", "PUT", "PATCH"];
 interface VisualEditorProps {
   content: string;
   onChange: (content: string) => void;
+  readOnly?: boolean;
 }
 
-export function VisualEditor({ content, onChange }: VisualEditorProps) {
+export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps) {
   const request = useMemo(() => parseHurl(content), [content]);
 
   function update(patch: Partial<HurlRequest>) {
+    if (readOnly) return;
     onChange(serializeHurl({ ...request, ...patch }));
   }
 
@@ -39,6 +41,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
           <Select
             value={request.method}
             onValueChange={(method) => update({ method })}
+            disabled={readOnly}
           >
             <SelectTrigger className="w-[130px] font-mono text-sm">
               <SelectValue />
@@ -56,6 +59,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
             placeholder="https://example.com/api"
             value={request.url}
             onChange={(url) => update({ url })}
+            readOnly={readOnly}
           />
         </div>
 
@@ -67,6 +71,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                 className="flex-1 font-mono text-sm"
                 placeholder="Header name"
                 value={header.key}
+                readOnly={readOnly}
                 onChange={(e) => {
                   const headers = [...request.headers];
                   headers[i] = { ...headers[i], key: e.target.value };
@@ -82,10 +87,12 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                   headers[i] = { ...headers[i], value };
                   update({ headers });
                 }}
+                readOnly={readOnly}
               />
               <Button
                 variant="ghost"
                 size="icon-sm"
+                disabled={readOnly}
                 onClick={() => {
                   const headers = request.headers.filter((_, j) => j !== i);
                   update({ headers });
@@ -98,6 +105,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
           <Button
             variant="outline"
             size="sm"
+            disabled={readOnly}
             onClick={() =>
               update({
                 headers: [...request.headers, { key: "", value: "" }],
@@ -118,12 +126,14 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                 onChange={(body) => update({ body: sanitizeJsonWhitespace(body) })}
                 language="json"
                 minHeight="120px"
+                readOnly={readOnly}
               />
               {request.body && (
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={readOnly}
                     onClick={() => {
                       try {
                         const parsed = JSON.parse(request.body);
@@ -141,6 +151,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={readOnly}
                     onClick={() => update({ body: "" })}
                   >
                     <Trash2 className="mr-1 h-3.5 w-3.5" />
@@ -153,6 +164,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
             <Button
               variant="outline"
               size="sm"
+              disabled={readOnly}
               onClick={() => update({ body: "{\n  \n}" })}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
@@ -171,6 +183,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
               className="w-[100px] font-mono text-sm"
               placeholder="200"
               value={request.responseStatus}
+              readOnly={readOnly}
               onChange={(e) => update({ responseStatus: e.target.value })}
             />
           </div>
@@ -184,6 +197,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                 className="flex-1 font-mono text-sm"
                 placeholder='token: jsonpath "$.token"'
                 value={capture}
+                readOnly={readOnly}
                 onChange={(e) => {
                   const captures = [...request.captures];
                   captures[i] = e.target.value;
@@ -193,6 +207,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
               <Button
                 variant="ghost"
                 size="icon-sm"
+                disabled={readOnly}
                 onClick={() => {
                   const captures = request.captures.filter((_, j) => j !== i);
                   update({ captures });
@@ -205,6 +220,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
           <Button
             variant="outline"
             size="sm"
+            disabled={readOnly}
             onClick={() => update({ captures: [...request.captures, ""] })}
           >
             <Plus className="mr-1 h-3.5 w-3.5" />
@@ -220,6 +236,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
                 className="flex-1 font-mono text-sm"
                 placeholder='jsonpath "$.id" exists'
                 value={assert}
+                readOnly={readOnly}
                 onChange={(e) => {
                   const asserts = [...request.asserts];
                   asserts[i] = e.target.value;
@@ -229,6 +246,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
               <Button
                 variant="ghost"
                 size="icon-sm"
+                disabled={readOnly}
                 onClick={() => {
                   const asserts = request.asserts.filter((_, j) => j !== i);
                   update({ asserts });
@@ -241,6 +259,7 @@ export function VisualEditor({ content, onChange }: VisualEditorProps) {
           <Button
             variant="outline"
             size="sm"
+            disabled={readOnly}
             onClick={() => update({ asserts: [...request.asserts, ""] })}
           >
             <Plus className="mr-1 h-3.5 w-3.5" />
