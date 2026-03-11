@@ -366,7 +366,7 @@ export function Sidebar({
   const renderFileItem = (fileInfo: FileInfo) => (
     <div
       key={fileInfo.name}
-      className={`group flex items-center rounded-md px-2 py-1.5 text-sm cursor-pointer overflow-hidden min-w-0 ${
+      className={`group flex items-center gap-1 rounded-md px-2 py-1.5 text-sm cursor-pointer min-w-0 ${
         activeFile === fileInfo.name
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50"
@@ -376,23 +376,23 @@ export function Sidebar({
       {fileInfo.method ? (
         <Badge 
           variant="secondary" 
-          className={`mr-2 h-5 px-1.5 text-[10px] font-semibold shrink-0 ${METHOD_COLORS[fileInfo.method] ?? ""}`}
+          className={`h-5 px-1.5 text-[10px] font-semibold shrink-0 ${METHOD_COLORS[fileInfo.method] ?? ""}`}
         >
           {fileInfo.method}
         </Badge>
       ) : (
-        <FileText className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
-      <span className="flex-1 truncate" style={{ minWidth: 0 }}>{fileInfo.name}</span>
+      <span className="flex-1 truncate min-w-0">{fileInfo.name}</span>
       {pendingFiles?.has(fileInfo.name) && (
-        <span className="ml-1.5 h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
+        <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-3 w-3" />
