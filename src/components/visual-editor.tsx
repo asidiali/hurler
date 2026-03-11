@@ -89,34 +89,32 @@ export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps)
                 }}
                 readOnly={readOnly}
               />
-              {!readOnly && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => {
-                    const headers = request.headers.filter((_, j) => j !== i);
-                    update({ headers });
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={readOnly}
+                onClick={() => {
+                  const headers = request.headers.filter((_, j) => j !== i);
+                  update({ headers });
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
-          {!readOnly && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                update({
-                  headers: [...request.headers, { key: "", value: "" }],
-                })
-              }
-            >
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              Add Header
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly}
+            onClick={() =>
+              update({
+                headers: [...request.headers, { key: "", value: "" }],
+              })
+            }
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add Header
+          </Button>
         </Section>
 
         {/* Body */}
@@ -130,11 +128,12 @@ export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps)
                 minHeight="120px"
                 readOnly={readOnly}
               />
-              {request.body && !readOnly && (
+              {request.body && (
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={readOnly}
                     onClick={() => {
                       try {
                         const parsed = JSON.parse(request.body);
@@ -152,6 +151,7 @@ export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps)
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={readOnly}
                     onClick={() => update({ body: "" })}
                   >
                     <Trash2 className="mr-1 h-3.5 w-3.5" />
@@ -160,17 +160,16 @@ export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps)
                 </div>
               )}
             </div>
-          ) : !readOnly ? (
+          ) : (
             <Button
               variant="outline"
               size="sm"
+              disabled={readOnly}
               onClick={() => update({ body: "{\n  \n}" })}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Body
             </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground">No body</p>
           )}
         </Section>
 
@@ -205,30 +204,28 @@ export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps)
                   update({ captures });
                 }}
               />
-              {!readOnly && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => {
-                    const captures = request.captures.filter((_, j) => j !== i);
-                    update({ captures });
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={readOnly}
+                onClick={() => {
+                  const captures = request.captures.filter((_, j) => j !== i);
+                  update({ captures });
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
-          {!readOnly && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => update({ captures: [...request.captures, ""] })}
-            >
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              Add Capture
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly}
+            onClick={() => update({ captures: [...request.captures, ""] })}
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add Capture
+          </Button>
         </Section>
 
         {/* Asserts */}
@@ -246,30 +243,28 @@ export function VisualEditor({ content, onChange, readOnly }: VisualEditorProps)
                   update({ asserts });
                 }}
               />
-              {!readOnly && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => {
-                    const asserts = request.asserts.filter((_, j) => j !== i);
-                    update({ asserts });
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={readOnly}
+                onClick={() => {
+                  const asserts = request.asserts.filter((_, j) => j !== i);
+                  update({ asserts });
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
-          {!readOnly && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => update({ asserts: [...request.asserts, ""] })}
-            >
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              Add Assert
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly}
+            onClick={() => update({ asserts: [...request.asserts, ""] })}
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add Assert
+          </Button>
         </Section>
       </div>
     </ScrollArea>

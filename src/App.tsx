@@ -299,6 +299,7 @@ export default function App() {
     <TooltipProvider>
       <AppLayout
         projectName={projectName}
+        readOnly={readOnly}
         sidebar={
           <Sidebar
             files={files}

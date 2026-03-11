@@ -191,11 +191,6 @@ export function RequestEditor({
                 modified
               </Badge>
             )}
-            {readOnly && (
-              <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400">
-                read-only
-              </Badge>
-            )}
             {environment && (
               <Badge variant="secondary" className="text-xs">
                 {environment}

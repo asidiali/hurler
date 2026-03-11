@@ -1,10 +1,12 @@
 import { type ReactNode, useState, useCallback, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface AppLayoutProps {
   projectName?: string;
   sidebar: ReactNode;
   editor: ReactNode;
   response: ReactNode;
+  readOnly?: boolean;
 }
 
 function DragHandle({
@@ -65,7 +67,7 @@ function loadNumber(key: string, fallback: number): number {
   return fallback;
 }
 
-export function AppLayout({ projectName = "Hurler", sidebar, editor, response }: AppLayoutProps) {
+export function AppLayout({ projectName = "Hurler", sidebar, editor, response, readOnly }: AppLayoutProps) {
   const [sidebarWidth, setSidebarWidth] = useState(() => loadNumber("hurler:sidebarWidth", 260));
   const [editorRatio, setEditorRatio] = useState(() => loadNumber("hurler:editorRatio", 0.55));
   const mainRef = useRef<HTMLDivElement>(null);
@@ -90,8 +92,13 @@ export function AppLayout({ projectName = "Hurler", sidebar, editor, response }:
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
-      <div className="h-9 shrink-0 flex items-center px-3 border-b bg-muted/40">
+      <div className="h-9 shrink-0 flex items-center justify-between px-3 border-b bg-muted/40">
         <span className="text-sm font-semibold tracking-tight">{projectName}</span>
+        {readOnly && (
+          <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400">
+            read-only
+          </Badge>
+        )}
       </div>
       <div className="flex flex-1 min-h-0 overflow-hidden">
       <div style={{ width: sidebarWidth }} className="shrink-0 h-full overflow-hidden">
