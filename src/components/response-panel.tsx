@@ -96,6 +96,32 @@ function getFailureDetail(message: string): { actual: string; expected: string }
   return null;
 }
 
+// Check if the hurl source has a [Captures] section
+function hasCapuresSection(source: string): boolean {
+  return /^\[Captures\]/m.test(source);
+}
+
+// Check if the hurl source has explicit asserts (lines starting with assert keywords after HTTP line)
+function hasAssertsInSource(sourceLines: string[]): boolean {
+  let foundHttpLine = false;
+  for (const line of sourceLines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("HTTP")) {
+      foundHttpLine = true;
+      continue;
+    }
+    if (foundHttpLine && trimmed && !trimmed.startsWith("#") && !trimmed.startsWith("[")) {
+      // This is an assert line (not a section header or comment)
+      return true;
+    }
+    if (trimmed.startsWith("[") && !trimmed.startsWith("[Asserts]")) {
+      // Hit a different section, stop looking for asserts
+      if (foundHttpLine) break;
+    }
+  }
+  return false;
+}
+
 export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelProps) {
   if (isRunning) {
     return (
@@ -124,6 +150,14 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
     const line = sourceLines[a.line - 1]?.trim() ?? "";
     return !line.startsWith("HTTP");
   });
+
+  // Check if source has captures/asserts sections (to show tabs even when data is missing due to errors)
+  const sourceHasCaptures = hasCapuresSection(hurlSource);
+  const sourceHasAsserts = hasAssertsInSource(sourceLines);
+  
+  // Show tabs if we have runtime data OR if the source has the section (helps when captures fail)
+  const showAssertsTab = explicitAsserts.length > 0 || sourceHasAsserts;
+  const showCapturesTab = captures.length > 0 || sourceHasCaptures;
 
   const passCount = explicitAsserts.filter((a) => a.success).length;
   const failCount = explicitAsserts.filter((a) => !a.success).length;
@@ -163,26 +197,30 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
           <TabsTrigger value="headers">
             Headers{headers.length > 0 && ` (${headers.length})`}
           </TabsTrigger>
-          {explicitAsserts.length > 0 && (
+          {showAssertsTab && (
             <TabsTrigger value="asserts">
               Asserts
-              {failCount > 0 ? (
-                <Badge variant="outline" className="ml-1.5 bg-red-500/15 text-red-700 border-red-500/30 text-[10px] px-1.5 py-0">
-                  {failCount} failed
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="ml-1.5 bg-green-500/15 text-green-700 border-green-500/30 text-[10px] px-1.5 py-0">
-                  {passCount} passed
-                </Badge>
-              )}
+              {explicitAsserts.length > 0 ? (
+                failCount > 0 ? (
+                  <Badge variant="outline" className="ml-1.5 bg-red-500/15 text-red-700 border-red-500/30 text-[10px] px-1.5 py-0">
+                    {failCount} failed
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="ml-1.5 bg-green-500/15 text-green-700 border-green-500/30 text-[10px] px-1.5 py-0">
+                    {passCount} passed
+                  </Badge>
+                )
+              ) : null}
             </TabsTrigger>
           )}
-          {captures.length > 0 && (
+          {showCapturesTab && (
             <TabsTrigger value="captures">
               Captures
-              <Badge variant="outline" className="ml-1.5 bg-blue-500/15 text-blue-700 border-blue-500/30 text-[10px] px-1.5 py-0">
-                {captures.length}
-              </Badge>
+              {captures.length > 0 && (
+                <Badge variant="outline" className="ml-1.5 bg-blue-500/15 text-blue-700 border-blue-500/30 text-[10px] px-1.5 py-0">
+                  {captures.length}
+                </Badge>
+              )}
             </TabsTrigger>
           )}
           <TabsTrigger value="verbose">Verbose</TabsTrigger>
@@ -214,67 +252,79 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
           </div>
         </TabsContent>
 
-        {explicitAsserts.length > 0 && (
+        {showAssertsTab && (
           <TabsContent value="asserts" className="relative flex-1 m-0">
             <div className="absolute inset-0 overflow-auto">
               <div className="p-3 space-y-1">
-                {explicitAsserts.map((a, i) => {
-                  const label = getAssertLabel(a, sourceLines);
-                  const detail = a.message ? getFailureDetail(a.message) : null;
-                  return (
-                    <div
-                      key={i}
-                      className={`flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono ${
-                        a.success
-                          ? "bg-green-500/5 text-green-800"
-                          : "bg-red-500/5 text-red-800"
-                      }`}
-                    >
-                      {a.success ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-green-600" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-600" />
-                      )}
-                      <div className="min-w-0">
-                        <div className="break-all">{label}</div>
-                        {detail && (
-                          <div className="mt-1 text-[11px] text-muted-foreground space-y-0.5">
-                            <div>actual: <span className="text-red-700">{detail.actual}</span></div>
-                            <div>expected: <span className="text-green-700">{detail.expected}</span></div>
-                          </div>
+                {explicitAsserts.length > 0 ? (
+                  explicitAsserts.map((a, i) => {
+                    const label = getAssertLabel(a, sourceLines);
+                    const detail = a.message ? getFailureDetail(a.message) : null;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono ${
+                          a.success
+                            ? "bg-green-500/5 text-green-800"
+                            : "bg-red-500/5 text-red-800"
+                        }`}
+                      >
+                        {a.success ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-green-600" />
+                        ) : (
+                          <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-600" />
                         )}
+                        <div className="min-w-0">
+                          <div className="break-all">{label}</div>
+                          {detail && (
+                            <div className="mt-1 text-[11px] text-muted-foreground space-y-0.5">
+                              <div>actual: <span className="text-red-700">{detail.actual}</span></div>
+                              <div>expected: <span className="text-green-700">{detail.expected}</span></div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Asserts could not be evaluated. Check the Verbose tab for details.
+                  </p>
+                )}
               </div>
             </div>
           </TabsContent>
         )}
 
-        {captures.length > 0 && (
+        {showCapturesTab && (
           <TabsContent value="captures" className="relative flex-1 m-0">
             <div className="absolute inset-0 overflow-auto">
               <div className="p-3 space-y-1">
-                {captures.map((c, i) => {
-                  const displayValue = typeof c.value === "string" 
-                    ? c.value 
-                    : JSON.stringify(c.value);
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono bg-blue-500/5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-semibold text-blue-700">{c.name}</span>
-                          <span className="text-muted-foreground">=</span>
-                          <span className="break-all text-foreground">{displayValue}</span>
+                {captures.length > 0 ? (
+                  captures.map((c, i) => {
+                    const displayValue = typeof c.value === "string" 
+                      ? c.value 
+                      : JSON.stringify(c.value);
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono bg-blue-500/5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-semibold text-blue-700">{c.name}</span>
+                            <span className="text-muted-foreground">=</span>
+                            <span className="break-all text-foreground">{displayValue}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Captures failed to execute. Check the Verbose tab for details.
+                  </p>
+                )}
               </div>
             </div>
           </TabsContent>
