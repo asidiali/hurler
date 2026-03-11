@@ -499,8 +499,8 @@ export function Sidebar({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0 w-full">
-        <div className="p-1 overflow-hidden">
+      <ScrollArea className="flex-1 min-h-0 w-full [&>[data-slot=scroll-area-viewport]]:!overflow-x-hidden">
+        <div className="p-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
