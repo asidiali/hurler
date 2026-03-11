@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/app-layout";
 import { Sidebar } from "@/components/sidebar";
@@ -251,6 +251,15 @@ export default function App() {
         activeEnvironment ?? undefined
       );
       setRunResult(result);
+      // Refresh env context if captures were saved to environment
+      if (result.capturesSaved && activeEnvironment) {
+        setEnvRefreshKey((k) => k + 1);
+        // Extract capture count from result JSON
+        const json = result.json as { entries?: Array<{ captures?: unknown[] }> };
+        const captures = json?.entries?.[json.entries.length - 1]?.captures ?? [];
+        const count = captures.length;
+        toast.success(`${count} capture${count === 1 ? '' : 's'} saved to ${activeEnvironment}`);
+      }
     } catch (err) {
       setRunResult({
         success: false,
