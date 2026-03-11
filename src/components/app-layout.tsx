@@ -93,7 +93,7 @@ export function AppLayout({ sidebar, editor, response }: AppLayoutProps) {
         <span className="text-sm font-semibold tracking-tight">Hurler</span>
       </div>
       <div className="flex flex-1 min-h-0 overflow-hidden">
-      <div style={{ width: sidebarWidth }} className="shrink-0 overflow-hidden">
+      <div style={{ width: sidebarWidth }} className="shrink-0 h-full overflow-hidden">
         {sidebar}
       </div>
       <DragHandle direction="horizontal" onDrag={onSidebarDrag} />
