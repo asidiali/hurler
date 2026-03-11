@@ -8,8 +8,9 @@ import { fileURLToPath } from "node:url";
 const execFileAsync = promisify(execFile);
 
 // Read version from package.json
+// When compiled, runs from dist/server/, so go up two levels to reach package root
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const packageJson = JSON.parse(readFileSync(path.join(__dirname, "..", "package.json"), "utf-8"));
+const packageJson = JSON.parse(readFileSync(path.join(__dirname, "..", "..", "package.json"), "utf-8"));
 const VERSION = packageJson.version as string;
 
 interface MetadataSection {
