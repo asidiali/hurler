@@ -83,9 +83,11 @@ export function VariableInput({
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [dropdownLeft, setDropdownLeft] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const matches = useMemo(
     () => parseVariables(value, variables),
@@ -225,6 +227,12 @@ export function VariableInput({
     setCursorPosition(inputRef.current?.selectionStart ?? 0);
   };
 
+  const handleScroll = () => {
+    if (inputRef.current) {
+      setScrollLeft(inputRef.current.scrollLeft);
+    }
+  };
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Hidden span for measuring text width */}
@@ -236,12 +244,18 @@ export function VariableInput({
       
       {/* Highlighted overlay */}
       <div
-        className="pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-3 py-2 font-mono text-sm"
+        ref={overlayRef}
+        className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3 py-2 font-mono text-sm"
         aria-hidden
       >
-        {value ? renderHighlightedText(value, matches) : (
-          <span className="text-muted-foreground">{placeholder}</span>
-        )}
+        <span 
+          className="whitespace-pre"
+          style={{ transform: `translateX(-${scrollLeft}px)` }}
+        >
+          {value ? renderHighlightedText(value, matches) : (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
+        </span>
       </div>
       
       {/* Actual input (transparent text) */}
@@ -253,6 +267,7 @@ export function VariableInput({
         onClick={handleClick}
         onKeyUp={handleClick}
         onKeyDown={handleKeyDown}
+        onScroll={handleScroll}
         onFocus={() => setIsFocused(true)}
         onBlur={() => {
           // Delay to allow click on autocomplete

@@ -28,15 +28,16 @@ export function parseHurl(content: string): HurlRequest {
   }
   if (lines.length === 0) return result;
 
-  // Line 1: METHOD URL
-  const firstLine = lines[0].trim();
-  if (firstLine) {
+  // Line 1: METHOD URL (preserve URL exactly, including trailing spaces)
+  const firstLine = lines[0];
+  const firstLineTrimmed = firstLine.trim();
+  if (firstLineTrimmed) {
     const spaceIdx = firstLine.indexOf(" ");
     if (spaceIdx !== -1) {
-      result.method = firstLine.substring(0, spaceIdx).toUpperCase();
-      result.url = firstLine.substring(spaceIdx + 1).trim();
+      result.method = firstLine.substring(0, spaceIdx).trim().toUpperCase();
+      result.url = firstLine.substring(spaceIdx + 1);
     } else {
-      result.method = firstLine.toUpperCase();
+      result.method = firstLineTrimmed.toUpperCase();
     }
   }
 
@@ -46,19 +47,22 @@ export function parseHurl(content: string): HurlRequest {
   // Headers: lines matching "Key: Value" until blank line, body start, or HTTP line
   while (i < lines.length) {
     const line = lines[i];
-    const trimmed = line.trim();
+    const lineTrimmed = line.trim();
 
-    if (trimmed === "") {
+    if (lineTrimmed === "") {
       i++;
       break;
     }
-    if (trimmed.startsWith("HTTP")) break;
+    if (lineTrimmed.startsWith("HTTP")) break;
 
-    const colonIdx = trimmed.indexOf(":");
-    if (colonIdx >= 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    const colonIdx = line.indexOf(":");
+    if (colonIdx >= 0 && !lineTrimmed.startsWith("{") && !lineTrimmed.startsWith("[")) {
+      // Preserve header value exactly (including trailing spaces)
+      // Only trim leading whitespace from key, and single space after colon
+      const rawValue = line.substring(colonIdx + 1);
       result.headers.push({
-        key: trimmed.substring(0, colonIdx).trim(),
-        value: trimmed.substring(colonIdx + 1).trim(),
+        key: line.substring(0, colonIdx).trim(),
+        value: rawValue.startsWith(" ") ? rawValue.substring(1) : rawValue,
       });
       i++;
     } else {
@@ -96,25 +100,27 @@ export function parseHurl(content: string): HurlRequest {
   let currentSection: "none" | "captures" | "asserts" = "none";
 
   while (i < lines.length) {
-    const trimmed = lines[i].trim();
+    const line = lines[i];
+    const lineTrimmed = line.trim();
 
-    if (trimmed === "[Captures]") {
+    if (lineTrimmed === "[Captures]") {
       currentSection = "captures";
       i++;
       continue;
     }
-    if (trimmed === "[Asserts]") {
+    if (lineTrimmed === "[Asserts]") {
       currentSection = "asserts";
       i++;
       continue;
     }
 
-    // Keep empty lines in captures/asserts for visual editor
+    // Preserve line content including trailing spaces, but trim leading whitespace
+    const preservedLine = line.trimStart();
     if (currentSection === "captures") {
-      result.captures.push(trimmed);
+      result.captures.push(preservedLine);
     } else if (currentSection === "asserts") {
-      result.asserts.push(trimmed);
-    } else if (trimmed !== "") {
+      result.asserts.push(preservedLine);
+    } else if (lineTrimmed !== "") {
       // Orphan non-empty line outside sections - ignore
       // If no section header yet, ignore orphan lines (shouldn't happen in valid hurl)
     }
