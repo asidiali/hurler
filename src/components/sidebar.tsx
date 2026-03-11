@@ -500,7 +500,7 @@ export function Sidebar({
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-1">
+        <div className="p-1 w-full overflow-hidden">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -531,7 +531,7 @@ export function Sidebar({
                     onCancelEdit={() => setEditingSectionId(null)}
                   >
                     {sectionFileList.map((fileInfo) => (
-                      <div key={fileInfo.name} className="pl-3">
+                      <div key={fileInfo.name} className="pl-3 overflow-hidden">
                         {renderFileItem(fileInfo)}
                       </div>
                     ))}
@@ -549,7 +549,7 @@ export function Sidebar({
                 ungroupedFiles.map((fileInfo) => (
                   <div
                     key={fileInfo.name}
-                    className={metadata.sections.length > 0 ? "pl-3" : ""}
+                    className={`overflow-hidden ${metadata.sections.length > 0 ? "pl-3" : ""}`}
                   >
                     {renderFileItem(fileInfo)}
                   </div>
