@@ -74,7 +74,7 @@ function renderHighlightedText(text: string, matches: VariableMatch[], options?:
     const baseClasses = cn(
       "rounded px-0.5 font-semibold",
       match.isDefined
-        ? "bg-emerald-500/40 text-emerald-700 dark:bg-emerald-400/50 dark:text-emerald-200"
+        ? "bg-emerald-500/40 text-emerald-700 dark:bg-emerald-300/60 dark:text-emerald-200"
         : "bg-rose-500/40 text-rose-700 underline decoration-wavy decoration-rose-500 dark:bg-rose-400/50 dark:text-rose-200"
     );
     
