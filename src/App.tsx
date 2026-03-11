@@ -281,12 +281,22 @@ export default function App() {
   // Handle content changes - store pending changes
   const handleEditorChange = useCallback((content: string) => {
     setEditorContent(content);
-    // Store pending changes as user types
     if (activeFile) {
-      setPendingContent(activeFile, content);
-      setPendingFiles(prev => new Set(prev).add(activeFile));
+      // Only mark as pending if content actually differs from saved
+      if (content !== savedContent) {
+        setPendingContent(activeFile, content);
+        setPendingFiles(prev => new Set(prev).add(activeFile));
+      } else {
+        // Content matches saved - clear pending state for this file
+        clearPendingContent(activeFile);
+        setPendingFiles(prev => {
+          const next = new Set(prev);
+          next.delete(activeFile);
+          return next;
+        });
+      }
     }
-  }, [activeFile]);
+  }, [activeFile, savedContent]);
   
   // Warn user before leaving if there are unsaved changes
   useEffect(() => {
