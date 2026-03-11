@@ -30,6 +30,7 @@ interface EnvEditorProps {
   onClose: () => void;
   environments: string[];
   onRefresh: () => void;
+  onEnvChange?: () => void;
 }
 
 interface EnvVar {
@@ -42,6 +43,7 @@ export function EnvEditor({
   onClose,
   environments,
   onRefresh,
+  onEnvChange,
 }: EnvEditorProps) {
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const [variables, setVariables] = useState<EnvVar[]>([]);
@@ -142,6 +144,7 @@ export function EnvEditor({
     }
     await api.updateEnvironment(selectedEnv, vars, secs);
     setIsDirty(false);
+    onEnvChange?.();
   };
 
   const handleCreateEnv = async () => {

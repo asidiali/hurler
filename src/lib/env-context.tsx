@@ -24,9 +24,11 @@ const EnvContext = createContext<EnvContextValue>({
 
 export function EnvProvider({
   environment,
+  refreshKey,
   children,
 }: {
   environment: string | null;
+  refreshKey?: number;
   children: ReactNode;
 }) {
   const [variables, setVariables] = useState<string[]>([]);
@@ -65,7 +67,7 @@ export function EnvProvider({
         setVariablesWithType([]);
       })
       .finally(() => setIsLoading(false));
-  }, [environment]);
+  }, [environment, refreshKey]);
 
   return (
     <EnvContext.Provider value={{ environment, variables, secrets, variablesWithType, isLoading }}>
