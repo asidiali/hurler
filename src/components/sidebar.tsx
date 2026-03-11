@@ -383,7 +383,7 @@ export function Sidebar({
       ) : (
         <FileText className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
       )}
-      <span className="truncate flex-1">{fileInfo.name}</span>
+      <span className="flex-1 truncate" style={{ minWidth: 0 }}>{fileInfo.name}</span>
       {pendingFiles?.has(fileInfo.name) && (
         <span className="ml-1.5 h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
       )}
@@ -474,7 +474,7 @@ export function Sidebar({
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-muted/30">
+    <div className="flex h-full w-full flex-col bg-muted/30 overflow-hidden">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-sm font-semibold">Requests</span>
         <div className="flex items-center gap-0.5">
@@ -499,8 +499,8 @@ export function Sidebar({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="p-1 w-full overflow-hidden">
+      <ScrollArea className="flex-1 min-h-0 w-full">
+        <div className="p-1 overflow-hidden">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
