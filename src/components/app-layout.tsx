@@ -1,5 +1,14 @@
 import { type ReactNode, useState, useCallback, useRef } from "react";
+import { HelpCircle, ExternalLink, Bug, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +21,7 @@ interface AppLayoutProps {
   editor: ReactNode;
   response: ReactNode;
   readOnly?: boolean;
+  version?: string;
 }
 
 function DragHandle({
@@ -72,7 +82,7 @@ function loadNumber(key: string, fallback: number): number {
   return fallback;
 }
 
-export function AppLayout({ projectName = "Hurler", sidebar, editor, response, readOnly }: AppLayoutProps) {
+export function AppLayout({ projectName = "Hurler", sidebar, editor, response, readOnly, version }: AppLayoutProps) {
   const [sidebarWidth, setSidebarWidth] = useState(() => loadNumber("hurler:sidebarWidth", 260));
   const [editorRatio, setEditorRatio] = useState(() => loadNumber("hurler:editorRatio", 0.55));
   const mainRef = useRef<HTMLDivElement>(null);
@@ -99,18 +109,58 @@ export function AppLayout({ projectName = "Hurler", sidebar, editor, response, r
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       <div className="h-9 shrink-0 flex items-center justify-between px-3 border-b bg-muted/40">
         <span className="text-sm font-semibold tracking-tight">{projectName}</span>
-        {readOnly && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400 cursor-default">
-                read-only
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>This Hurler instance is running in read-only mode</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <div className="flex items-center gap-2">
+          {readOnly && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400 cursor-default">
+                  read-only
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This Hurler instance is running in read-only mode</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <HelpCircle className="h-4 w-4" />
+                <span className="sr-only">Help menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <a href="https://github.com/asidiali/hurler/releases" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Changelog
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://github.com/asidiali/hurler/issues/new" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <Bug className="h-4 w-4" />
+                  File a bug
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://hurler.sidia.li" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Documentation
+                </a>
+              </DropdownMenuItem>
+              {version && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Hurler v{version}
+                  </div>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className="flex flex-1 min-h-0 overflow-hidden">
       <div style={{ width: sidebarWidth }} className="shrink-0 h-full overflow-hidden">

@@ -1,10 +1,16 @@
 import express, { type Request, type Response } from "express";
-import { promises as fs } from "node:fs";
+import { promises as fs, readFileSync } from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
+
+// Read version from package.json
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageJson = JSON.parse(readFileSync(path.join(__dirname, "..", "package.json"), "utf-8"));
+const VERSION = packageJson.version as string;
 
 interface MetadataSection {
   id: string;
@@ -63,7 +69,7 @@ export function createApp(dataDir: string, projectName?: string, readOnly?: bool
   // --- Project info endpoint ---
 
   app.get("/api/project", (_req: Request, res: Response) => {
-    res.json({ name: derivedProjectName, readOnly: readOnly ?? false });
+    res.json({ name: derivedProjectName, readOnly: readOnly ?? false, version: VERSION });
   });
 
   // --- File endpoints ---
