@@ -53,6 +53,7 @@ clearAllPendingChanges();
 export default function App() {
   const [projectName, setProjectName] = useState<string>("Hurler");
   const [readOnly, setReadOnly] = useState(false);
+  const [version, setVersion] = useState<string>("");
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [environments, setEnvironments] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -91,6 +92,7 @@ export default function App() {
     const info = await api.getProjectInfo();
     setProjectName(info.name);
     setReadOnly(info.readOnly);
+    setVersion(info.version);
     document.title = `${info.name} | Hurler`;
   }, []);
 
@@ -319,6 +321,7 @@ export default function App() {
       <AppLayout
         projectName={projectName}
         readOnly={readOnly}
+        version={version}
         sidebar={
           <Sidebar
             files={files}
