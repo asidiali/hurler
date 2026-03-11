@@ -366,7 +366,7 @@ export function Sidebar({
   const renderFileItem = (fileInfo: FileInfo) => (
     <div
       key={fileInfo.name}
-      className={`group flex items-center rounded-md px-2 py-1.5 text-sm cursor-pointer ${
+      className={`group flex items-center rounded-md px-2 py-1.5 text-sm cursor-pointer overflow-hidden min-w-0 ${
         activeFile === fileInfo.name
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50"
