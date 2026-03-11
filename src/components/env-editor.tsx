@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -63,6 +64,7 @@ export function EnvEditor({
   const [newEnvName, setNewEnvName] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [showSecretValues, setShowSecretValues] = useState<Record<number, boolean>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (selectedEnv) {
@@ -210,7 +212,7 @@ export function EnvEditor({
               <Plus className="h-4 w-4" />
             </Button>
             {selectedEnv && (
-              <Button variant="destructive" size="icon" onClick={handleDeleteEnv} disabled={readOnly}>
+              <Button variant="destructive" size="icon" onClick={() => setShowDeleteConfirm(true)} disabled={readOnly}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
@@ -399,6 +401,17 @@ export function EnvEditor({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete environment"
+        description={`Are you sure you want to delete the "${selectedEnv}" environment? All variables and secrets will be permanently deleted.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteEnv}
+      />
     </>
   );
 }

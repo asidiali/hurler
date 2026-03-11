@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -242,6 +243,7 @@ export function Sidebar({
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingSectionName, setEditingSectionName] = useState("");
+  const [deletingFile, setDeletingFile] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -451,7 +453,7 @@ export function Sidebar({
             disabled={readOnly}
             onClick={(e) => {
               e.stopPropagation();
-              onDeleteFile(fileInfo.name);
+              setDeletingFile(fileInfo.name);
             }}
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -676,6 +678,22 @@ export function Sidebar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deletingFile !== null}
+        onOpenChange={(open) => !open && setDeletingFile(null)}
+        title="Delete request"
+        description={`Are you sure you want to delete "${deletingFile}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => {
+          if (deletingFile) {
+            onDeleteFile(deletingFile);
+            setDeletingFile(null);
+          }
+        }}
+      />
     </div>
   );
 }
