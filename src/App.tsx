@@ -81,6 +81,9 @@ export default function App() {
   
   // Track which files have pending (unsaved) changes for sidebar indicator
   const [pendingFiles, setPendingFiles] = useState<Set<string>>(new Set());
+  
+  // Trigger re-fetch of env variables when environments are updated
+  const [envRefreshKey, setEnvRefreshKey] = useState(0);
 
   // Fetch project info and update document title
   const loadProjectInfo = useCallback(async () => {
@@ -290,7 +293,7 @@ export default function App() {
   }, []);
 
   return (
-    <EnvProvider environment={activeEnvironment}>
+    <EnvProvider environment={activeEnvironment} refreshKey={envRefreshKey}>
     <TooltipProvider>
       <AppLayout
         projectName={projectName}
@@ -332,6 +335,7 @@ export default function App() {
         onClose={() => setShowEnvEditor(false)}
         environments={environments}
         onRefresh={loadEnvironments}
+        onEnvChange={() => setEnvRefreshKey((k) => k + 1)}
       />
       <EnvPickerModal
         open={showEnvPicker && environments.length > 0}
