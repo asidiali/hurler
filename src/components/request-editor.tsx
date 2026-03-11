@@ -186,9 +186,14 @@ export function RequestEditor({
               </TabsList>
             </Tabs>
             <div className="flex-1" />
-            {isDirty && !readOnly && (
+            {isDirty && (
               <Badge variant="outline" className="text-xs">
                 modified
+              </Badge>
+            )}
+            {readOnly && (
+              <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400">
+                read-only
               </Badge>
             )}
             {environment && (
@@ -196,12 +201,10 @@ export function RequestEditor({
                 {environment}
               </Badge>
             )}
-            {!readOnly && (
-              <Button variant="outline" size="sm" onClick={onSave} disabled={!isDirty}>
-                <Save className="mr-1 h-3.5 w-3.5" />
-                Save
-              </Button>
-            )}
+            <Button variant="outline" size="sm" onClick={onSave} disabled={!isDirty || readOnly}>
+              <Save className="mr-1 h-3.5 w-3.5" />
+              Save
+            </Button>
             <Button size="sm" onClick={onRun} disabled={isRunning}>
               {isRunning ? (
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />

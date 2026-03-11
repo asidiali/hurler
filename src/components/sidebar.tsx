@@ -103,6 +103,7 @@ interface SortableSectionProps {
   onCommitRename: () => void;
   onCancelEdit: () => void;
   children: React.ReactNode;
+  readOnly?: boolean;
 }
 
 function SortableSection({
@@ -118,6 +119,7 @@ function SortableSection({
   onCommitRename,
   onCancelEdit,
   children,
+  readOnly,
 }: SortableSectionProps) {
   const {
     attributes,
@@ -174,13 +176,15 @@ function SortableSection({
         </button>
         {!isEditing && (
           <>
-            <div
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
-            >
-              <GripVertical className="h-3 w-3" />
-            </div>
+            {!readOnly && (
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover:opacity-100 hover:text-foreground"
+              >
+                <GripVertical className="h-3 w-3" />
+              </div>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -192,13 +196,14 @@ function SortableSection({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onRename}>
+                <DropdownMenuItem onClick={onRename} disabled={readOnly}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={onDelete}
+                  disabled={readOnly}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete section
@@ -389,71 +394,71 @@ export function Sidebar({
       {pendingFiles?.has(fileInfo.name) && (
         <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
       )}
-      {!readOnly && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreVertical className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                setRenamingFile(fileInfo.name);
-                setRenameNewName(fileInfo.name);
-                setShowRenameDialog(true);
-              }}
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              Rename
-            </DropdownMenuItem>
-            {metadata.sections.length > 0 && (
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Move to</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {metadata.sections.map((section) => (
-                    <DropdownMenuItem
-                      key={section.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMoveFile(fileInfo.name, section.id);
-                      }}
-                      disabled={metadata.fileGroups[fileInfo.name] === section.id}
-                    >
-                      {section.name}
-                    </DropdownMenuItem>
-                  ))}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreVertical className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            disabled={readOnly}
+            onClick={(e) => {
+              e.stopPropagation();
+              setRenamingFile(fileInfo.name);
+              setRenameNewName(fileInfo.name);
+              setShowRenameDialog(true);
+            }}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Rename
+          </DropdownMenuItem>
+          {metadata.sections.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger disabled={readOnly}>Move to</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {metadata.sections.map((section) => (
                   <DropdownMenuItem
+                    key={section.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleMoveFile(fileInfo.name, null);
+                      handleMoveFile(fileInfo.name, section.id);
                     }}
-                    disabled={!metadata.fileGroups[fileInfo.name]}
+                    disabled={readOnly || metadata.fileGroups[fileInfo.name] === section.id}
                   >
-                    Ungrouped
+                    {section.name}
                   </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            )}
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteFile(fileInfo.name);
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+                ))}
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMoveFile(fileInfo.name, null);
+                  }}
+                  disabled={readOnly || !metadata.fileGroups[fileInfo.name]}
+                >
+                  Ungrouped
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          )}
+          <DropdownMenuItem
+            className="text-destructive"
+            disabled={readOnly}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteFile(fileInfo.name);
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 
@@ -481,28 +486,28 @@ export function Sidebar({
     <div className="flex h-full w-full flex-col bg-muted/30 overflow-hidden">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-sm font-semibold">Requests</span>
-        {!readOnly && (
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleCreateSection}
-              title="New section"
-            >
-              <FolderPlus className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setShowNewDialog(true)}
-              title="New request"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleCreateSection}
+            title="New section"
+            disabled={readOnly}
+          >
+            <FolderPlus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setShowNewDialog(true)}
+            title="New request"
+            disabled={readOnly}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <ScrollArea className="flex-1 min-h-0 w-full [&>[data-slot=scroll-area-viewport]]:!overflow-x-hidden">
@@ -535,6 +540,7 @@ export function Sidebar({
                     onEditNameChange={setEditingSectionName}
                     onCommitRename={commitRename}
                     onCancelEdit={() => setEditingSectionId(null)}
+                    readOnly={readOnly}
                   >
                     {sectionFileList.map((fileInfo) => (
                       <div key={fileInfo.name} className="pl-3 min-w-0">

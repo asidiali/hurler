@@ -341,6 +341,7 @@ export default function App() {
         onRefresh={loadEnvironments}
         onEnvChange={() => setEnvRefreshKey((k) => k + 1)}
         activeEnvironment={activeEnvironment}
+        readOnly={readOnly}
       />
       <EnvPickerModal
         open={showEnvPicker && environments.length > 0}
