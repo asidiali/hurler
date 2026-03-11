@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-03-10
+
+### Added
+- Auto-save captures to environment variables (#52)
+  - When a request runs with captures, values are automatically saved to the current environment
+  - Captured variables can be used immediately in subsequent requests via `{{varName}}`
+  - Toast notification shows count and environment name (e.g., "2 captures saved to production")
+  - Works even when request fails (e.g., assertion failure) as long as captures succeeded
+
 ## [0.9.1] - 2026-03-10
 
 ### Added
