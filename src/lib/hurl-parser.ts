@@ -47,21 +47,21 @@ export function parseHurl(content: string): HurlRequest {
   // Headers: lines matching "Key: Value" until blank line, body start, or HTTP line
   while (i < lines.length) {
     const line = lines[i];
-    const trimmed = line.trim();
+    const lineTrimmed = line.trim();
 
-    if (trimmed === "") {
+    if (lineTrimmed === "") {
       i++;
       break;
     }
-    if (trimmed.startsWith("HTTP")) break;
+    if (lineTrimmed.startsWith("HTTP")) break;
 
-    const colonIdx = trimmed.indexOf(":");
-    if (colonIdx >= 0 && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    const colonIdx = line.indexOf(":");
+    if (colonIdx >= 0 && !lineTrimmed.startsWith("{") && !lineTrimmed.startsWith("[")) {
       // Preserve header value exactly (including trailing spaces)
-      // But trim the leading space after colon if present
-      const rawValue = trimmed.substring(colonIdx + 1);
+      // Only trim leading whitespace from key, and single space after colon
+      const rawValue = line.substring(colonIdx + 1);
       result.headers.push({
-        key: trimmed.substring(0, colonIdx).trim(),
+        key: line.substring(0, colonIdx).trim(),
         value: rawValue.startsWith(" ") ? rawValue.substring(1) : rawValue,
       });
       i++;
@@ -100,25 +100,27 @@ export function parseHurl(content: string): HurlRequest {
   let currentSection: "none" | "captures" | "asserts" = "none";
 
   while (i < lines.length) {
-    const trimmed = lines[i].trim();
+    const line = lines[i];
+    const lineTrimmed = line.trim();
 
-    if (trimmed === "[Captures]") {
+    if (lineTrimmed === "[Captures]") {
       currentSection = "captures";
       i++;
       continue;
     }
-    if (trimmed === "[Asserts]") {
+    if (lineTrimmed === "[Asserts]") {
       currentSection = "asserts";
       i++;
       continue;
     }
 
-    // Keep empty lines in captures/asserts for visual editor
+    // Preserve line content including trailing spaces, but trim leading whitespace
+    const preservedLine = line.trimStart();
     if (currentSection === "captures") {
-      result.captures.push(trimmed);
+      result.captures.push(preservedLine);
     } else if (currentSection === "asserts") {
-      result.asserts.push(trimmed);
-    } else if (trimmed !== "") {
+      result.asserts.push(preservedLine);
+    } else if (lineTrimmed !== "") {
       // Orphan non-empty line outside sections - ignore
       // If no section header yet, ignore orphan lines (shouldn't happen in valid hurl)
     }
