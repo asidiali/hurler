@@ -383,7 +383,7 @@ export function Sidebar({
       ) : (
         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
-      <span className="flex-1 truncate min-w-0">{fileInfo.name}</span>
+      <span className="flex-1 w-0 truncate">{fileInfo.name}</span>
       {pendingFiles?.has(fileInfo.name) && (
         <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
       )}
