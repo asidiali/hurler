@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-03-10
+
+### Added
+- Project directory name shown in header bar instead of static "Hurler" (#37)
+- Document title updates to `<project> | Hurler` format
+- Unsaved changes persist when navigating between files (#36)
+  - Changes stored in sessionStorage
+  - Restored when returning to a file
+  - Browser warns before closing with unsaved changes
+
+### Fixed
+- Request sidebar now scrolls when content overflows (#38)
+
 ## [0.8.0] - 2026-03-10
 
 ### Added
