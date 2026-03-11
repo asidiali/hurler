@@ -72,6 +72,7 @@ interface SidebarProps {
   activeEnvironment: string | null;
   onSelectEnvironment: (name: string | null) => void;
   onOpenEnvEditor: () => void;
+  pendingFiles?: Set<string>;
 }
 
 const METHOD_COLORS: Record<string, string> = {
@@ -224,6 +225,7 @@ export function Sidebar({
   activeEnvironment,
   onSelectEnvironment,
   onOpenEnvEditor,
+  pendingFiles,
 }: SidebarProps) {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newFileName, setNewFileName] = useState("");
@@ -382,6 +384,9 @@ export function Sidebar({
         <FileText className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
       )}
       <span className="truncate flex-1">{fileInfo.name}</span>
+      {pendingFiles?.has(fileInfo.name) && (
+        <span className="ml-1.5 h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
