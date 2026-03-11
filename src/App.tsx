@@ -264,6 +264,18 @@ export default function App() {
     }
   }, [activeFile, activeEnvironment, editorContent, savedContent, loadFiles]);
 
+  const handleSaveCaptureToEnv = useCallback(async (name: string, value: string) => {
+    if (!activeEnvironment) return;
+    // Read current environment
+    const env = await api.readEnvironment(activeEnvironment);
+    // Add the new variable (or update existing)
+    const updatedVars = { ...env.variables, [name]: value };
+    // Write back
+    await api.updateEnvironment(activeEnvironment, updatedVars, env.secrets);
+    // Refresh env context
+    setEnvRefreshKey((k) => k + 1);
+  }, [activeEnvironment]);
+
   const isDirty = editorContent !== savedContent;
   
   // Keep ref in sync for beforeunload handler
@@ -332,7 +344,13 @@ export default function App() {
           />
         }
         response={
-          <ResponsePanel result={runResult} isRunning={isRunning} hurlSource={savedContent} />
+          <ResponsePanel 
+            result={runResult} 
+            isRunning={isRunning} 
+            hurlSource={savedContent}
+            environment={activeEnvironment}
+            onSaveCaptureToEnv={handleSaveCaptureToEnv}
+          />
         }
       />
       <EnvEditor

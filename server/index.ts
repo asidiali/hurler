@@ -14,9 +14,10 @@ interface MetadataSection {
 interface Metadata {
   sections: MetadataSection[];
   fileGroups: Record<string, string>;
+  captureToEnv?: Record<string, string[]>; // fileName -> capture names to persist
 }
 
-const DEFAULT_METADATA: Metadata = { sections: [], fileGroups: {} };
+const DEFAULT_METADATA: Metadata = { sections: [], fileGroups: {}, captureToEnv: {} };
 
 export function createApp(dataDir: string, projectName?: string, readOnly?: boolean) {
   const app = express();

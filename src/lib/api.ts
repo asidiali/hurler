@@ -95,6 +95,7 @@ export interface Section {
 export interface Metadata {
   sections: Section[];
   fileGroups: Record<string, string>;
+  captureToEnv?: Record<string, string[]>; // fileName -> capture names to persist
 }
 
 export const getMetadata = () => fetchJSON<Metadata>(`${BASE}/metadata`);

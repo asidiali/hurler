@@ -1,12 +1,17 @@
+import { useState } from "react";
 import type { RunResult } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, XCircle, Save, Loader2, Check } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ResponsePanelProps {
   result: RunResult | null;
   isRunning: boolean;
   hurlSource: string;
+  environment?: string | null;
+  onSaveCaptureToEnv?: (name: string, value: string) => Promise<void>;
 }
 
 interface AssertResult {
@@ -96,7 +101,72 @@ function getFailureDetail(message: string): { actual: string; expected: string }
   return null;
 }
 
-export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelProps) {
+function CaptureRow({ 
+  name, 
+  displayValue, 
+  stringValue,
+  environment, 
+  onSave 
+}: { 
+  name: string; 
+  displayValue: string;
+  stringValue: string;
+  environment?: string | null; 
+  onSave?: (name: string, value: string) => Promise<void>;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (!onSave || !environment) return;
+    setSaving(true);
+    try {
+      await onSave(name, stringValue);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono bg-blue-500/5">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="font-semibold text-blue-700 dark:text-blue-400">{name}</span>
+          <span className="text-muted-foreground">=</span>
+          <span className="break-all text-foreground">{displayValue}</span>
+        </div>
+      </div>
+      {environment && onSave && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : saved ? (
+                <Check className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Save to environment</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
+export function ResponsePanel({ result, isRunning, hurlSource, environment, onSaveCaptureToEnv }: ResponsePanelProps) {
   if (isRunning) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -260,19 +330,18 @@ export function ResponsePanel({ result, isRunning, hurlSource }: ResponsePanelPr
                   const displayValue = typeof c.value === "string" 
                     ? c.value 
                     : JSON.stringify(c.value);
+                  const stringValue = typeof c.value === "string" 
+                    ? c.value 
+                    : JSON.stringify(c.value);
                   return (
-                    <div
+                    <CaptureRow
                       key={i}
-                      className="flex items-start gap-2 rounded-md px-2.5 py-2 text-xs font-mono bg-blue-500/5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-semibold text-blue-700">{c.name}</span>
-                          <span className="text-muted-foreground">=</span>
-                          <span className="break-all text-foreground">{displayValue}</span>
-                        </div>
-                      </div>
-                    </div>
+                      name={c.name}
+                      displayValue={displayValue}
+                      stringValue={stringValue}
+                      environment={environment}
+                      onSave={onSaveCaptureToEnv}
+                    />
                   );
                 })}
               </div>
