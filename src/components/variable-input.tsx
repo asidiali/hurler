@@ -71,24 +71,20 @@ function renderHighlightedText(text: string, matches: VariableMatch[], options?:
     }
     
     // Add the highlighted variable
-    const varSpan = (
-      <span
-        className={cn(
-          "rounded px-0.5 font-semibold",
-          match.isDefined
-            ? "bg-emerald-500/40 text-emerald-700 dark:bg-emerald-400/50 dark:text-emerald-200"
-            : "bg-rose-500/40 text-rose-700 underline decoration-wavy decoration-rose-500 dark:bg-rose-400/50 dark:text-rose-200"
-        )}
-      >
-        {text.slice(match.start, match.end)}
-      </span>
+    const baseClasses = cn(
+      "rounded px-0.5 font-semibold",
+      match.isDefined
+        ? "bg-emerald-500/40 text-emerald-700 dark:bg-emerald-400/50 dark:text-emerald-200"
+        : "bg-rose-500/40 text-rose-700 underline decoration-wavy decoration-rose-500 dark:bg-rose-400/50 dark:text-rose-200"
     );
     
     if (tooltipValue !== null) {
       parts.push(
         <Tooltip key={`var-${i}`}>
           <TooltipTrigger asChild>
-            {varSpan}
+            <span className={cn(baseClasses, "pointer-events-auto cursor-default")}>
+              {text.slice(match.start, match.end)}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <p className="font-mono text-xs">{tooltipValue}</p>
@@ -97,7 +93,9 @@ function renderHighlightedText(text: string, matches: VariableMatch[], options?:
       );
     } else {
       parts.push(
-        <span key={`var-${i}`}>{varSpan}</span>
+        <span key={`var-${i}`} className={baseClasses}>
+          {text.slice(match.start, match.end)}
+        </span>
       );
     }
     lastIndex = match.end;
