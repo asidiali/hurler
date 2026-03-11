@@ -1,5 +1,10 @@
 import { type ReactNode, useState, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AppLayoutProps {
   projectName?: string;
@@ -95,9 +100,16 @@ export function AppLayout({ projectName = "Hurler", sidebar, editor, response, r
       <div className="h-9 shrink-0 flex items-center justify-between px-3 border-b bg-muted/40">
         <span className="text-sm font-semibold tracking-tight">{projectName}</span>
         {readOnly && (
-          <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400">
-            read-only
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="secondary" className="text-xs text-amber-600 dark:text-amber-400 cursor-default">
+                read-only
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>This Hurler instance is running in read-only mode</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
       <div className="flex flex-1 min-h-0 overflow-hidden">
