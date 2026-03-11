@@ -366,7 +366,7 @@ export function Sidebar({
   const renderFileItem = (fileInfo: FileInfo) => (
     <div
       key={fileInfo.name}
-      className={`group flex items-center gap-1 rounded-md px-2 py-1.5 text-sm cursor-pointer min-w-0 ${
+      className={`group flex items-center gap-1 rounded-md px-2 py-1.5 text-sm cursor-pointer min-w-0 overflow-hidden ${
         activeFile === fileInfo.name
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50"
@@ -531,7 +531,7 @@ export function Sidebar({
                     onCancelEdit={() => setEditingSectionId(null)}
                   >
                     {sectionFileList.map((fileInfo) => (
-                      <div key={fileInfo.name} className="pl-3 overflow-hidden">
+                      <div key={fileInfo.name} className="pl-3 min-w-0">
                         {renderFileItem(fileInfo)}
                       </div>
                     ))}
@@ -549,7 +549,7 @@ export function Sidebar({
                 ungroupedFiles.map((fileInfo) => (
                   <div
                     key={fileInfo.name}
-                    className={`overflow-hidden ${metadata.sections.length > 0 ? "pl-3" : ""}`}
+                    className={`min-w-0 ${metadata.sections.length > 0 ? "pl-3" : ""}`}
                   >
                     {renderFileItem(fileInfo)}
                   </div>
