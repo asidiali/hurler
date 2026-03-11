@@ -12,6 +12,7 @@ import * as api from "@/lib/api";
 import type { RunResult, Metadata, FileInfo } from "@/lib/api";
 
 export default function App() {
+  const [projectName, setProjectName] = useState<string>("Hurler");
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [environments, setEnvironments] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -36,6 +37,13 @@ export default function App() {
     () => !localStorage.getItem("hurler:activeEnvironment")
   );
 
+  // Fetch project info and update document title
+  const loadProjectInfo = useCallback(async () => {
+    const info = await api.getProjectInfo();
+    setProjectName(info.name);
+    document.title = `${info.name} | Hurler`;
+  }, []);
+
   const loadFiles = useCallback(async () => {
     const result = await api.listFiles();
     setFiles(result);
@@ -57,10 +65,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    loadProjectInfo();
     loadFiles();
     loadEnvironments();
     loadMetadata();
-  }, [loadFiles, loadEnvironments, loadMetadata]);
+  }, [loadProjectInfo, loadFiles, loadEnvironments, loadMetadata]);
 
   const handleUpdateMetadata = useCallback(async (updated: Metadata) => {
     setMetadata(updated);
@@ -163,6 +172,7 @@ export default function App() {
     <EnvProvider environment={activeEnvironment}>
     <TooltipProvider>
       <AppLayout
+        projectName={projectName}
         sidebar={
           <Sidebar
             files={files}

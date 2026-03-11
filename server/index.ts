@@ -18,13 +18,16 @@ interface Metadata {
 
 const DEFAULT_METADATA: Metadata = { sections: [], fileGroups: {} };
 
-export function createApp(dataDir: string) {
+export function createApp(dataDir: string, projectName?: string) {
   const app = express();
   app.use(express.json());
 
   const COLLECTIONS_DIR = path.join(dataDir, "collections");
   const ENVIRONMENTS_DIR = path.join(dataDir, "environments");
   const METADATA_PATH = path.join(dataDir, "metadata.json");
+  
+  // Derive project name from dataDir parent (the cwd where hurler was run)
+  const derivedProjectName = projectName ?? path.basename(path.dirname(dataDir));
 
   async function ensureDirs() {
     await fs.mkdir(COLLECTIONS_DIR, { recursive: true });
@@ -43,6 +46,12 @@ export function createApp(dataDir: string) {
   async function writeMetadata(metadata: Metadata): Promise<void> {
     await fs.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), "utf-8");
   }
+
+  // --- Project info endpoint ---
+
+  app.get("/api/project", (_req: Request, res: Response) => {
+    res.json({ name: derivedProjectName });
+  });
 
   // --- File endpoints ---
 
