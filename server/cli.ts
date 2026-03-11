@@ -24,7 +24,7 @@ checkHurlInstalled();
 const { values } = parseArgs({
   options: {
     port: { type: "string", short: "p" },
-    open: { type: "boolean" },
+    open: { type: "boolean", short: "o" },
     "read-only": { type: "boolean" },
   },
 });
