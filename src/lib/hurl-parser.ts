@@ -34,7 +34,7 @@ export function parseHurl(content: string): HurlRequest {
     const spaceIdx = firstLine.indexOf(" ");
     if (spaceIdx !== -1) {
       result.method = firstLine.substring(0, spaceIdx).toUpperCase();
-      result.url = firstLine.substring(spaceIdx + 1).trim();
+      result.url = firstLine.substring(spaceIdx + 1);
     } else {
       result.method = firstLine.toUpperCase();
     }
