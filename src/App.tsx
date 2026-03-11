@@ -252,9 +252,13 @@ export default function App() {
       );
       setRunResult(result);
       // Refresh env context if captures were saved to environment
-      if (result.capturesSaved) {
+      if (result.capturesSaved && activeEnvironment) {
         setEnvRefreshKey((k) => k + 1);
-        toast.success("Captures saved to environment");
+        // Extract capture count from result JSON
+        const json = result.json as { entries?: Array<{ captures?: unknown[] }> };
+        const captures = json?.entries?.[json.entries.length - 1]?.captures ?? [];
+        const count = captures.length;
+        toast.success(`${count} capture${count === 1 ? '' : 's'} saved to ${activeEnvironment}`);
       }
     } catch (err) {
       setRunResult({
