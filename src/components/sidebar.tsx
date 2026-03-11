@@ -72,6 +72,7 @@ interface SidebarProps {
   activeEnvironment: string | null;
   onSelectEnvironment: (name: string | null) => void;
   onOpenEnvEditor: () => void;
+  pendingFiles?: Set<string>;
 }
 
 const METHOD_COLORS: Record<string, string> = {
@@ -224,6 +225,7 @@ export function Sidebar({
   activeEnvironment,
   onSelectEnvironment,
   onOpenEnvEditor,
+  pendingFiles,
 }: SidebarProps) {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newFileName, setNewFileName] = useState("");
@@ -364,7 +366,7 @@ export function Sidebar({
   const renderFileItem = (fileInfo: FileInfo) => (
     <div
       key={fileInfo.name}
-      className={`group flex items-center rounded-md px-2 py-1.5 text-sm cursor-pointer ${
+      className={`group flex items-center gap-1 rounded-md px-2 py-1.5 text-sm cursor-pointer min-w-0 overflow-hidden ${
         activeFile === fileInfo.name
           ? "bg-accent text-accent-foreground"
           : "hover:bg-accent/50"
@@ -374,20 +376,23 @@ export function Sidebar({
       {fileInfo.method ? (
         <Badge 
           variant="secondary" 
-          className={`mr-2 h-5 px-1.5 text-[10px] font-semibold shrink-0 ${METHOD_COLORS[fileInfo.method] ?? ""}`}
+          className={`h-5 px-1.5 text-[10px] font-semibold shrink-0 ${METHOD_COLORS[fileInfo.method] ?? ""}`}
         >
           {fileInfo.method}
         </Badge>
       ) : (
-        <FileText className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
-      <span className="truncate flex-1">{fileInfo.name}</span>
+      <span className="flex-1 w-0 truncate">{fileInfo.name}</span>
+      {pendingFiles?.has(fileInfo.name) && (
+        <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" title="Unsaved changes" />
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-3 w-3" />
@@ -469,7 +474,7 @@ export function Sidebar({
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-muted/30">
+    <div className="flex h-full w-full flex-col bg-muted/30 overflow-hidden">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-sm font-semibold">Requests</span>
         <div className="flex items-center gap-0.5">
@@ -494,7 +499,7 @@ export function Sidebar({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea className="flex-1 min-h-0 w-full [&>[data-slot=scroll-area-viewport]]:!overflow-x-hidden">
         <div className="p-1">
           <DndContext
             sensors={sensors}
@@ -526,7 +531,7 @@ export function Sidebar({
                     onCancelEdit={() => setEditingSectionId(null)}
                   >
                     {sectionFileList.map((fileInfo) => (
-                      <div key={fileInfo.name} className="pl-3">
+                      <div key={fileInfo.name} className="pl-3 min-w-0">
                         {renderFileItem(fileInfo)}
                       </div>
                     ))}
@@ -544,7 +549,7 @@ export function Sidebar({
                 ungroupedFiles.map((fileInfo) => (
                   <div
                     key={fileInfo.name}
-                    className={metadata.sections.length > 0 ? "pl-3" : ""}
+                    className={`min-w-0 ${metadata.sections.length > 0 ? "pl-3" : ""}`}
                   >
                     {renderFileItem(fileInfo)}
                   </div>

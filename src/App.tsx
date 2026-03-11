@@ -36,6 +36,20 @@ function hasAnyPendingChanges(): boolean {
   return false;
 }
 
+function clearAllPendingChanges(): void {
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key?.startsWith(PENDING_KEY_PREFIX)) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(key => sessionStorage.removeItem(key));
+}
+
+// Clear all pending changes on page load (refresh should discard changes)
+clearAllPendingChanges();
+
 export default function App() {
   const [projectName, setProjectName] = useState<string>("Hurler");
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -64,6 +78,9 @@ export default function App() {
   
   // Track if we have unsaved changes for beforeunload
   const isDirtyRef = useRef(false);
+  
+  // Track which files have pending (unsaved) changes for sidebar indicator
+  const [pendingFiles, setPendingFiles] = useState<Set<string>>(new Set());
 
   // Fetch project info and update document title
   const loadProjectInfo = useCallback(async () => {
@@ -140,6 +157,11 @@ export default function App() {
       await api.deleteFile(name);
       // Clear any pending changes for deleted file
       clearPendingContent(name);
+      setPendingFiles(prev => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+      });
       if (activeFile === name) {
         setActiveFile(null);
         setEditorContent("");
@@ -167,6 +189,12 @@ export default function App() {
       if (pending !== null) {
         clearPendingContent(oldName);
         setPendingContent(result.newName, pending);
+        setPendingFiles(prev => {
+          const next = new Set(prev);
+          next.delete(oldName);
+          next.add(result.newName);
+          return next;
+        });
       }
       
       // If the renamed file was active, update activeFile to new name
@@ -185,6 +213,11 @@ export default function App() {
     setSavedContent(editorContent);
     // Clear pending changes since we've saved
     clearPendingContent(activeFile);
+    setPendingFiles(prev => {
+      const next = new Set(prev);
+      next.delete(activeFile);
+      return next;
+    });
     // Refresh file list to update HTTP method badge
     await loadFiles();
   }, [activeFile, editorContent, loadFiles]);
@@ -197,6 +230,11 @@ export default function App() {
       setSavedContent(editorContent);
       // Clear pending changes since we've saved
       clearPendingContent(activeFile);
+      setPendingFiles(prev => {
+        const next = new Set(prev);
+        next.delete(activeFile);
+        return next;
+      });
       // Refresh file list to update HTTP method badge
       await loadFiles();
     }
@@ -232,6 +270,7 @@ export default function App() {
     // Store pending changes as user types
     if (activeFile) {
       setPendingContent(activeFile, content);
+      setPendingFiles(prev => new Set(prev).add(activeFile));
     }
   }, [activeFile]);
   
@@ -240,8 +279,8 @@ export default function App() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirtyRef.current) {
         e.preventDefault();
-        // Modern browsers ignore custom messages, but we need to set returnValue
-        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        // Modern browsers ignore custom messages, but we set it for older browsers
+        e.returnValue = "Any unsaved changes will be lost.";
         return e.returnValue;
       }
     };
@@ -269,6 +308,7 @@ export default function App() {
             activeEnvironment={activeEnvironment}
             onSelectEnvironment={setActiveEnvironment}
             onOpenEnvEditor={() => setShowEnvEditor(true)}
+            pendingFiles={pendingFiles}
           />
         }
         editor={
