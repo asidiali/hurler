@@ -11,6 +11,8 @@ interface EnvContextValue {
   variables: string[];
   secrets: string[];
   variablesWithType: EnvVariable[];
+  variableValues: Record<string, string>;
+  secretValues: Record<string, string>;
   isLoading: boolean;
 }
 
@@ -19,6 +21,8 @@ const EnvContext = createContext<EnvContextValue>({
   variables: [],
   secrets: [],
   variablesWithType: [],
+  variableValues: {},
+  secretValues: {},
   isLoading: false,
 });
 
@@ -34,6 +38,8 @@ export function EnvProvider({
   const [variables, setVariables] = useState<string[]>([]);
   const [secrets, setSecrets] = useState<string[]>([]);
   const [variablesWithType, setVariablesWithType] = useState<EnvVariable[]>([]);
+  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -41,6 +47,8 @@ export function EnvProvider({
       setVariables([]);
       setSecrets([]);
       setVariablesWithType([]);
+      setVariableValues({});
+      setSecretValues({});
       return;
     }
 
@@ -60,17 +68,21 @@ export function EnvProvider({
         setVariables(vars);
         setSecrets(secretKeys);
         setVariablesWithType(varsWithType);
+        setVariableValues(env.variables);
+        setSecretValues(env.secrets);
       })
       .catch(() => {
         setVariables([]);
         setSecrets([]);
         setVariablesWithType([]);
+        setVariableValues({});
+        setSecretValues({});
       })
       .finally(() => setIsLoading(false));
   }, [environment, refreshKey]);
 
   return (
-    <EnvContext.Provider value={{ environment, variables, secrets, variablesWithType, isLoading }}>
+    <EnvContext.Provider value={{ environment, variables, secrets, variablesWithType, variableValues, secretValues, isLoading }}>
       {children}
     </EnvContext.Provider>
   );

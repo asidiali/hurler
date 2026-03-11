@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo, type KeyboardEvent } from "react";
 import { useEnvVariables } from "@/lib/env-context";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface VariableInputProps {
   value: string;
@@ -32,7 +37,13 @@ function parseVariables(text: string, definedVars: string[]): VariableMatch[] {
   return matches;
 }
 
-function renderHighlightedText(text: string, matches: VariableMatch[]) {
+interface RenderOptions {
+  variableValues: Record<string, string>;
+  secretValues: Record<string, string>;
+  secrets: string[];
+}
+
+function renderHighlightedText(text: string, matches: VariableMatch[], options?: RenderOptions) {
   if (matches.length === 0) {
     return <span>{text}</span>;
   }
@@ -47,10 +58,21 @@ function renderHighlightedText(text: string, matches: VariableMatch[]) {
         <span key={`text-${i}`}>{text.slice(lastIndex, match.start)}</span>
       );
     }
+    
+    // Get the value for tooltip
+    const isSecret = options?.secrets?.includes(match.name);
+    let tooltipValue: string | null = null;
+    if (options && match.isDefined) {
+      if (isSecret) {
+        tooltipValue = options.secretValues[match.name] ? "••••••••" : null;
+      } else {
+        tooltipValue = options.variableValues[match.name] ?? null;
+      }
+    }
+    
     // Add the highlighted variable
-    parts.push(
+    const varSpan = (
       <span
-        key={`var-${i}`}
         className={cn(
           "rounded px-0.5 font-semibold",
           match.isDefined
@@ -61,6 +83,23 @@ function renderHighlightedText(text: string, matches: VariableMatch[]) {
         {text.slice(match.start, match.end)}
       </span>
     );
+    
+    if (tooltipValue !== null) {
+      parts.push(
+        <Tooltip key={`var-${i}`}>
+          <TooltipTrigger asChild>
+            {varSpan}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="font-mono text-xs">{tooltipValue}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    } else {
+      parts.push(
+        <span key={`var-${i}`}>{varSpan}</span>
+      );
+    }
     lastIndex = match.end;
   });
 
@@ -79,7 +118,7 @@ export function VariableInput({
   className,
   readOnly,
 }: VariableInputProps) {
-  const { variables, secrets, environment } = useEnvVariables();
+  const { variables, secrets, variableValues, secretValues, environment } = useEnvVariables();
   const [isFocused, setIsFocused] = useState(false);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
@@ -254,7 +293,7 @@ export function VariableInput({
           className="whitespace-pre"
           style={{ transform: `translateX(-${scrollLeft}px)` }}
         >
-          {value ? renderHighlightedText(value, matches) : (
+          {value ? renderHighlightedText(value, matches, { variableValues, secretValues, secrets }) : (
             <span className="text-muted-foreground">{placeholder}</span>
           )}
         </span>
