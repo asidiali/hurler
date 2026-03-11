@@ -31,6 +31,7 @@ interface EnvEditorProps {
   environments: string[];
   onRefresh: () => void;
   onEnvChange?: () => void;
+  activeEnvironment?: string | null;
 }
 
 interface EnvVar {
@@ -44,8 +45,16 @@ export function EnvEditor({
   environments,
   onRefresh,
   onEnvChange,
+  activeEnvironment,
 }: EnvEditorProps) {
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
+  
+  // Select active environment when modal opens
+  useEffect(() => {
+    if (open && activeEnvironment && environments.includes(activeEnvironment)) {
+      setSelectedEnv(activeEnvironment);
+    }
+  }, [open, activeEnvironment, environments]);
   const [variables, setVariables] = useState<EnvVar[]>([]);
   const [secrets, setSecrets] = useState<EnvVar[]>([]);
   const [showNewEnvDialog, setShowNewEnvDialog] = useState(false);
