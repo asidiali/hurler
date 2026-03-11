@@ -18,9 +18,22 @@ interface Metadata {
 
 const DEFAULT_METADATA: Metadata = { sections: [], fileGroups: {} };
 
-export function createApp(dataDir: string, projectName?: string) {
+export function createApp(dataDir: string, projectName?: string, readOnly?: boolean) {
   const app = express();
   app.use(express.json());
+
+  // Read-only mode middleware - block write operations except /api/run
+  if (readOnly) {
+    app.use((req, res, next) => {
+      const isWriteMethod = ["POST", "PUT", "DELETE"].includes(req.method);
+      const isRunEndpoint = req.path === "/api/run";
+      if (isWriteMethod && !isRunEndpoint) {
+        res.status(403).json({ error: "Server is in read-only mode" });
+        return;
+      }
+      next();
+    });
+  }
 
   const COLLECTIONS_DIR = path.join(dataDir, "collections");
   const ENVIRONMENTS_DIR = path.join(dataDir, "environments");
@@ -50,7 +63,7 @@ export function createApp(dataDir: string, projectName?: string) {
   // --- Project info endpoint ---
 
   app.get("/api/project", (_req: Request, res: Response) => {
-    res.json({ name: derivedProjectName });
+    res.json({ name: derivedProjectName, readOnly: readOnly ?? false });
   });
 
   // --- File endpoints ---

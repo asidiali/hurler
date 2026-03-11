@@ -64,6 +64,7 @@ interface RequestEditorProps {
   isRunning: boolean;
   isDirty: boolean;
   environment: string | null;
+  readOnly?: boolean;
 }
 
 export function RequestEditor({
@@ -75,6 +76,7 @@ export function RequestEditor({
   isRunning,
   isDirty,
   environment,
+  readOnly,
 }: RequestEditorProps) {
   const [tab, setTab] = useState<"raw" | "visual">("visual");
   const editorRef = useRef<HTMLDivElement>(null);
@@ -141,6 +143,7 @@ export function RequestEditor({
           ".cm-gutters": { fontFamily: "'JetBrains Mono', 'Fira Code', monospace" },
         }),
         EditorView.lineWrapping,
+        EditorView.editable.of(!readOnly),
         // Add variable highlighting and autocomplete
         variableSupport(envVars, secrets),
       ],
@@ -155,7 +158,7 @@ export function RequestEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [fileName, theme, envVars, secrets]);
+  }, [fileName, theme, envVars, secrets, readOnly]);
 
   // Sync content into existing editor when it changes externally
   useEffect(() => {
@@ -183,7 +186,7 @@ export function RequestEditor({
               </TabsList>
             </Tabs>
             <div className="flex-1" />
-            {isDirty && (
+            {isDirty && !readOnly && (
               <Badge variant="outline" className="text-xs">
                 modified
               </Badge>
@@ -193,10 +196,12 @@ export function RequestEditor({
                 {environment}
               </Badge>
             )}
-            <Button variant="outline" size="sm" onClick={onSave} disabled={!isDirty}>
-              <Save className="mr-1 h-3.5 w-3.5" />
-              Save
-            </Button>
+            {!readOnly && (
+              <Button variant="outline" size="sm" onClick={onSave} disabled={!isDirty}>
+                <Save className="mr-1 h-3.5 w-3.5" />
+                Save
+              </Button>
+            )}
             <Button size="sm" onClick={onRun} disabled={isRunning}>
               {isRunning ? (
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
@@ -210,7 +215,7 @@ export function RequestEditor({
             <div ref={editorRef} className={`absolute inset-0 ${tab !== "raw" ? "invisible" : ""}`} />
             {tab === "visual" && (
               <div className="absolute inset-0">
-                <VisualEditor content={content} onChange={onChange} />
+                <VisualEditor content={content} onChange={onChange} readOnly={readOnly} />
               </div>
             )}
           </div>

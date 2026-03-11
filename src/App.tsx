@@ -52,6 +52,7 @@ clearAllPendingChanges();
 
 export default function App() {
   const [projectName, setProjectName] = useState<string>("Hurler");
+  const [readOnly, setReadOnly] = useState(false);
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [environments, setEnvironments] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -89,6 +90,7 @@ export default function App() {
   const loadProjectInfo = useCallback(async () => {
     const info = await api.getProjectInfo();
     setProjectName(info.name);
+    setReadOnly(info.readOnly);
     document.title = `${info.name} | Hurler`;
   }, []);
 
@@ -312,6 +314,7 @@ export default function App() {
             onSelectEnvironment={setActiveEnvironment}
             onOpenEnvEditor={() => setShowEnvEditor(true)}
             pendingFiles={pendingFiles}
+            readOnly={readOnly}
           />
         }
         editor={
@@ -324,6 +327,7 @@ export default function App() {
             isRunning={isRunning}
             isDirty={isDirty}
             environment={activeEnvironment}
+            readOnly={readOnly}
           />
         }
         response={

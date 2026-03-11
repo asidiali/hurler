@@ -67,6 +67,7 @@ interface CodeEditorProps {
   language?: "json" | "plain";
   minHeight?: string;
   className?: string;
+  readOnly?: boolean;
 }
 
 export function CodeEditor({
@@ -75,6 +76,7 @@ export function CodeEditor({
   language = "json",
   minHeight = "120px",
   className = "",
+  readOnly,
 }: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -122,6 +124,7 @@ export function CodeEditor({
         },
       }),
       EditorView.lineWrapping,
+      EditorView.editable.of(!readOnly),
       // Add variable highlighting and autocomplete
       variableSupport(envVars, secrets),
     ];
@@ -145,7 +148,7 @@ export function CodeEditor({
       viewRef.current?.destroy();
       viewRef.current = null;
     };
-  }, [language, minHeight, theme, envVars, secrets]);
+  }, [language, minHeight, theme, envVars, secrets, readOnly]);
 
   // Sync value changes from parent
   useEffect(() => {
