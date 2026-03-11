@@ -245,10 +245,13 @@ export function VariableInput({
       {/* Highlighted overlay */}
       <div
         ref={overlayRef}
-        className="pointer-events-none absolute inset-0 flex items-center overflow-hidden whitespace-pre px-3 py-2 font-mono text-sm"
+        className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3 py-2 font-mono text-sm"
         aria-hidden
       >
-        <span style={{ transform: `translateX(-${scrollLeft}px)` }}>
+        <span 
+          className="whitespace-pre"
+          style={{ transform: `translateX(-${scrollLeft}px)` }}
+        >
           {value ? renderHighlightedText(value, matches) : (
             <span className="text-muted-foreground">{placeholder}</span>
           )}
