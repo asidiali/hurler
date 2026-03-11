@@ -374,6 +374,48 @@ export function createApp(dataDir: string, projectName?: string, readOnly?: bool
 
   // --- Run endpoint ---
 
+  // Helper to extract captures from hurl JSON output
+  function extractCaptures(jsonOutput: unknown): Array<{ name: string; value: unknown }> {
+    const json = jsonOutput as {
+      entries?: Array<{
+        captures?: Array<{ name: string; value: unknown }>;
+      }>;
+    };
+    if (!json?.entries?.length) return [];
+    const lastEntry = json.entries[json.entries.length - 1];
+    return lastEntry.captures ?? [];
+  }
+
+  // Helper to save captures to environment file
+  async function saveCaptureToEnv(envName: string, captures: Array<{ name: string; value: unknown }>): Promise<boolean> {
+    if (!captures.length) return false;
+    
+    const envPath = path.join(ENVIRONMENTS_DIR, `${envName}.env`);
+    
+    // Read existing variables
+    let existingVars: Record<string, string> = {};
+    try {
+      const content = await fs.readFile(envPath, "utf-8");
+      existingVars = parseEnvFile(content);
+    } catch {
+      // File doesn't exist, start fresh
+    }
+    
+    // Merge captures into variables (captures overwrite existing)
+    for (const capture of captures) {
+      const value = typeof capture.value === "string" 
+        ? capture.value 
+        : JSON.stringify(capture.value);
+      existingVars[capture.name] = value;
+    }
+    
+    // Write back
+    const content = serializeEnvFile(existingVars);
+    await fs.writeFile(envPath, content, "utf-8");
+    
+    return true;
+  }
+
   app.post("/api/run", async (req: Request, res: Response) => {
     await ensureDirs();
     const { file, environment } = req.body as {
@@ -440,12 +482,22 @@ export function createApp(dataDir: string, projectName?: string, readOnly?: bool
         // stdout may not be valid JSON
       }
 
+      // Auto-save captures to environment (if env selected and not read-only)
+      let capturesSaved = false;
+      if (jsonOutput && environment && !readOnly) {
+        const captures = extractCaptures(jsonOutput);
+        if (captures.length > 0) {
+          capturesSaved = await saveCaptureToEnv(environment, captures);
+        }
+      }
+
       res.json({
         success: true,
         duration,
         json: jsonOutput,
         stdout,
         stderr,
+        capturesSaved,
       });
     } catch (err: unknown) {
       const duration = 0;
@@ -465,12 +517,22 @@ export function createApp(dataDir: string, projectName?: string, readOnly?: bool
         }
       }
 
+      // Still try to save captures even on "failure" (e.g., assertion failed but captures worked)
+      let capturesSaved = false;
+      if (jsonOutput && environment && !readOnly) {
+        const captures = extractCaptures(jsonOutput);
+        if (captures.length > 0) {
+          capturesSaved = await saveCaptureToEnv(environment, captures);
+        }
+      }
+
       res.json({
         success: false,
         duration,
         json: jsonOutput,
         stdout: error.stdout ?? "",
         stderr: error.stderr ?? error.message ?? "Unknown error",
+        capturesSaved,
       });
     }
   });

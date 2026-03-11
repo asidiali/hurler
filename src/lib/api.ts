@@ -112,6 +112,7 @@ export interface RunResult {
   json: unknown;
   stdout: string;
   stderr: string;
+  capturesSaved?: boolean;
 }
 
 export const runHurl = (file: string, environment?: string) =>

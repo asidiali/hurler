@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/app-layout";
 import { Sidebar } from "@/components/sidebar";
@@ -251,6 +251,11 @@ export default function App() {
         activeEnvironment ?? undefined
       );
       setRunResult(result);
+      // Refresh env context if captures were saved to environment
+      if (result.capturesSaved) {
+        setEnvRefreshKey((k) => k + 1);
+        toast.success("Captures saved to environment");
+      }
     } catch (err) {
       setRunResult({
         success: false,
