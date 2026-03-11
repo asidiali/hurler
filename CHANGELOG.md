@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-03-10
+
+### Changed
+- Unsaved changes now clear on page refresh/close (load fresh from file)
+- Red dot indicator shows next to files with unsaved changes in sidebar (#43)
+
+### Fixed
+- Sidebar file names properly truncate when overflowing
+
 ## [0.8.1] - 2026-03-10
 
 ### Added
