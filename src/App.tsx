@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/app-layout";
@@ -10,6 +10,31 @@ import { EnvPickerModal } from "@/components/env-picker-modal";
 import { EnvProvider } from "@/lib/env-context";
 import * as api from "@/lib/api";
 import type { RunResult, Metadata, FileInfo } from "@/lib/api";
+
+// Pending changes storage helpers
+const PENDING_KEY_PREFIX = "hurler:pending:";
+
+function getPendingContent(fileName: string): string | null {
+  return sessionStorage.getItem(PENDING_KEY_PREFIX + fileName);
+}
+
+function setPendingContent(fileName: string, content: string): void {
+  sessionStorage.setItem(PENDING_KEY_PREFIX + fileName, content);
+}
+
+function clearPendingContent(fileName: string): void {
+  sessionStorage.removeItem(PENDING_KEY_PREFIX + fileName);
+}
+
+function hasAnyPendingChanges(): boolean {
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key?.startsWith(PENDING_KEY_PREFIX)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export default function App() {
   const [projectName, setProjectName] = useState<string>("Hurler");
@@ -36,6 +61,9 @@ export default function App() {
   const [showEnvPicker, setShowEnvPicker] = useState(
     () => !localStorage.getItem("hurler:activeEnvironment")
   );
+  
+  // Track if we have unsaved changes for beforeunload
+  const isDirtyRef = useRef(false);
 
   // Fetch project info and update document title
   const loadProjectInfo = useCallback(async () => {
@@ -77,12 +105,25 @@ export default function App() {
   }, []);
 
   const handleSelectFile = useCallback(async (name: string) => {
+    // Save current file's pending changes before switching
+    if (activeFile && editorContent !== savedContent) {
+      setPendingContent(activeFile, editorContent);
+    }
+    
     const result = await api.readFile(name);
     setActiveFile(name);
-    setEditorContent(result.content);
     setSavedContent(result.content);
+    
+    // Check for pending changes for this file
+    const pending = getPendingContent(name);
+    if (pending !== null) {
+      setEditorContent(pending);
+    } else {
+      setEditorContent(result.content);
+    }
+    
     setRunResult(null);
-  }, []);
+  }, [activeFile, editorContent, savedContent]);
 
   const handleCreateFile = useCallback(
     async (name: string) => {
@@ -97,6 +138,8 @@ export default function App() {
   const handleDeleteFile = useCallback(
     async (name: string) => {
       await api.deleteFile(name);
+      // Clear any pending changes for deleted file
+      clearPendingContent(name);
       if (activeFile === name) {
         setActiveFile(null);
         setEditorContent("");
@@ -118,6 +161,14 @@ export default function App() {
   const handleRenameFile = useCallback(
     async (oldName: string, newName: string) => {
       const result = await api.renameFile(oldName, newName);
+      
+      // Migrate pending changes to new filename
+      const pending = getPendingContent(oldName);
+      if (pending !== null) {
+        clearPendingContent(oldName);
+        setPendingContent(result.newName, pending);
+      }
+      
       // If the renamed file was active, update activeFile to new name
       if (activeFile === oldName) {
         setActiveFile(result.newName);
@@ -132,6 +183,8 @@ export default function App() {
     if (!activeFile) return;
     await api.updateFile(activeFile, editorContent);
     setSavedContent(editorContent);
+    // Clear pending changes since we've saved
+    clearPendingContent(activeFile);
     // Refresh file list to update HTTP method badge
     await loadFiles();
   }, [activeFile, editorContent, loadFiles]);
@@ -142,6 +195,8 @@ export default function App() {
     if (editorContent !== savedContent) {
       await api.updateFile(activeFile, editorContent);
       setSavedContent(editorContent);
+      // Clear pending changes since we've saved
+      clearPendingContent(activeFile);
       // Refresh file list to update HTTP method badge
       await loadFiles();
     }
@@ -167,6 +222,33 @@ export default function App() {
   }, [activeFile, activeEnvironment, editorContent, savedContent, loadFiles]);
 
   const isDirty = editorContent !== savedContent;
+  
+  // Keep ref in sync for beforeunload handler
+  isDirtyRef.current = isDirty || hasAnyPendingChanges();
+  
+  // Handle content changes - store pending changes
+  const handleEditorChange = useCallback((content: string) => {
+    setEditorContent(content);
+    // Store pending changes as user types
+    if (activeFile) {
+      setPendingContent(activeFile, content);
+    }
+  }, [activeFile]);
+  
+  // Warn user before leaving if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        // Modern browsers ignore custom messages, but we need to set returnValue
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   return (
     <EnvProvider environment={activeEnvironment}>
@@ -193,7 +275,7 @@ export default function App() {
           <RequestEditor
             fileName={activeFile}
             content={editorContent}
-            onChange={setEditorContent}
+            onChange={handleEditorChange}
             onRun={handleRun}
             onSave={handleSave}
             isRunning={isRunning}
